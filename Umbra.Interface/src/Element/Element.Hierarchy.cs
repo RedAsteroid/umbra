@@ -70,4 +70,16 @@ public partial class Element
 
         RemoveQueryCacheForChild(child);
     }
+
+    /// <summary>
+    /// Clears all children from this element.
+    /// </summary>
+    public void Clear()
+    {
+        var derefChildren = new List<Element>(_children);
+
+        foreach (var child in derefChildren) {
+            RemoveChild(child);
+        }
+    }
 }

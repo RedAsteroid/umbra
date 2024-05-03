@@ -14,6 +14,7 @@
  *     GNU Affero General Public License for more details.
  */
 
+using System;
 using System.Numerics;
 using ImGuiNET;
 using Umbra.Common;
@@ -23,11 +24,20 @@ namespace Umbra.Toolbar;
 
 internal partial class Toolbar
 {
+    [ConfigVariable("Toolbar.ItemSpacing", "ToolbarSettings", "ToolbarCustomization", min: 1, max: 32)]
+    private static int ItemSpacing { get; set; } = 6;
+
+    [ConfigVariable("Toolbar.MarginLeft", "ToolbarSettings", "ToolbarCustomization", min: -1, max: 2048)]
+    private static int ToolbarLeftMargin { get; set; } = 0;
+
+    [ConfigVariable("Toolbar.MarginRight", "ToolbarSettings", "ToolbarCustomization", min: -1, max: 2048)]
+    private static int ToolbarRightMargin { get; set; } = 0;
+
+    [ConfigVariable("Toolbar.YOffset", "ToolbarSettings", "ToolbarCustomization", min: -2048, max: 2048)]
+    public static int YOffset { get; set; } = 0;
+
     private readonly Color _color1 = Theme.Color(ThemeColor.ToolbarLight);
     private readonly Color _color2 = Theme.Color(ThemeColor.ToolbarDark);
-
-    [ConfigVariable("Toolbar.ItemSpacing", "ToolbarSettings", min: 1, max: 32)]
-    private static int ItemSpacing { get; set; } = 6;
 
     private float _xPosition;
     private float _yPosition;
@@ -49,18 +59,29 @@ internal partial class Toolbar
     private void UpdateToolbar()
     {
         var     viewport    = ImGui.GetMainViewport();
-        Vector2 displaySize = viewport.Size;
+        Vector2 displaySize = ImGui.GetIO().DisplaySize;
         Vector2 displayPos  = viewport.Pos;
 
-        _element.Get("Left").Gap   = ItemSpacing;
-        _element.Get("Middle").Gap = ItemSpacing;
-        _element.Get("Right").Gap  = ItemSpacing;
+        Element left  = _element.Get("Left");
+        Element mid   = _element.Get("Middle");
+        Element right = _element.Get("Right");
+
+        left.Gap  = ItemSpacing;
+        mid.Gap   = ItemSpacing;
+        right.Gap = ItemSpacing;
+
+        left.IsVisible  = !player.IsEditingHud;
+        mid.IsVisible   = !player.IsEditingHud;
+        right.IsVisible = !player.IsEditingHud;
+
+        _element.Style.Opacity = player.IsEditingHud ? 0.80f : 1.0f;
 
         _xPosition = displayPos.X;
-        _yPosition = displayPos.Y + (IsTopAligned ? 0 : displaySize.Y);
+        _yPosition = displayPos.Y + (IsTopAligned ? ImGui.GetMainViewport().WorkPos.Y + YOffset : displaySize.Y - YOffset);
 
         _element.Anchor = IsTopAligned ? Anchor.TopLeft : Anchor.BottomLeft;
-        _element.Size   = new((int)displaySize.X, Height);
+        _element.Size   = new((int)(MathF.Ceiling(displaySize.X / Element.ScaleFactor)), Height);
+        _element.Padding = new(left: ToolbarLeftMargin, right: ToolbarRightMargin);
 
         _element.Get<GradientElement>().Gradient = Gradient.Vertical(
             IsTopAligned ? _color2 : _color1,

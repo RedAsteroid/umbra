@@ -22,16 +22,20 @@ using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.GeneratedSheets;
 using Umbra.Common;
+using Umbra.Game;
 
 namespace Umbra.Markers.Factories;
 
 [Service]
-public class GatheringNodeWorldMarkerFactory(IDataManager dataManager, IObjectTable objectTable) : IWorldMarkerFactory
+public class GatheringNodeWorldMarkerFactory(IDataManager dataManager, IObjectTable objectTable, IPlayer player)
+    : IWorldMarkerFactory
 {
     [ConfigVariable("Markers.GatheringNodes.Enabled", "EnabledMarkers")]
     private static bool Enabled { get; set; } = true;
 
     private readonly List<GatheringNode> _gatheringNodes = [];
+
+    private int _displayIndex = 0;
 
     public List<WorldMarker> GetMarkers()
     {
@@ -45,6 +49,7 @@ public class GatheringNodeWorldMarkerFactory(IDataManager dataManager, IObjectTa
                         IconId          = obj.IconId,
                         Label           = obj.Label,
                         SubLabel        = obj.SubLabel,
+                        ShowDirection   = obj.ShowDirection,
                         MinFadeDistance = 12,
                         MaxFadeDistance = 15,
                     }
@@ -54,7 +59,7 @@ public class GatheringNodeWorldMarkerFactory(IDataManager dataManager, IObjectTa
     }
 
     [OnTick(interval: 1000)]
-    public void FindGatheringNodes()
+    internal void FindGatheringNodes()
     {
         if (!Enabled) return;
 
@@ -72,6 +77,15 @@ public class GatheringNodeWorldMarkerFactory(IDataManager dataManager, IObjectTa
                 _gatheringNodes.Add(node.Value);
             }
         }
+    }
+
+    [OnTick(interval: 2000)]
+    internal void IncreaseDisplayIndex()
+    {
+        _displayIndex++;
+
+        if (_displayIndex > 1000)
+            _displayIndex = 0;
     }
 
     private GatheringNode? CreateNodeFromObject(GameObject obj)
@@ -95,10 +109,11 @@ public class GatheringNodeWorldMarkerFactory(IDataManager dataManager, IObjectTa
             .ToList()!;
 
         return new GatheringNode {
-            Position = obj.Position,
-            IconId   = (uint)(point.GatheringPointBase.Value?.GatheringType.Value?.IconMain ?? 0),
-            Label    = $"Lv.{point.GatheringPointBase.Value!.GatheringLevel} {obj.Name}",
-            SubLabel = items.Count > 0 ? $"{point.Count}x {string.Join(", ", items)}" : null,
+            Position      = obj.Position,
+            IconId        = (uint)(point.GatheringPointBase.Value?.GatheringType.Value?.IconMain ?? 0),
+            Label         = $"Lv.{point.GatheringPointBase.Value!.GatheringLevel} {obj.Name}",
+            SubLabel      = items.Count > 0 ? $"{point.Count}x {items[_displayIndex % items.Count]}" : null,
+            ShowDirection = !(!player.IsDiving && point.GatheringPointBase.Value?.GatheringType.Row == 5),
         };
     }
 
@@ -108,5 +123,6 @@ public class GatheringNodeWorldMarkerFactory(IDataManager dataManager, IObjectTa
         public uint    IconId;
         public string  Label;
         public string? SubLabel;
+        public bool    ShowDirection;
     }
 }

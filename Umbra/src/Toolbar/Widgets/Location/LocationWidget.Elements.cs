@@ -14,6 +14,7 @@
  *     GNU Affero General Public License for more details.
  */
 
+using Dalamud.Interface;
 using Umbra.Interface;
 
 namespace Umbra.Toolbar.Widgets.Location;
@@ -32,19 +33,39 @@ internal partial class LocationWidget
                 flow: Flow.Vertical,
                 anchor: Anchor.MiddleCenter,
                 size: new(225, 28),
+                margin: new(right: ItemSpacing),
                 children: [
                     new(
                         id: "Name",
+                        flow: Flow.Horizontal,
                         size: new(225, 14),
-                        text: "Zone Name Here",
-                        style: new() {
-                            Font         = Font.AxisSmall,
-                            TextAlign    = Anchor.BottomRight,
-                            TextColor    = Theme.Color(ThemeColor.Text),
-                            TextOffset   = new(0, 0),
-                            OutlineColor = Theme.Color(ThemeColor.TextOutline),
-                            OutlineWidth = 1,
-                        }
+                        gap: 6,
+                        children: [
+                            new(
+                                id: "Label",
+                                size: new(0, 14),
+                                text: "Zone Name Here",
+                                anchor: Anchor.MiddleRight,
+                                style: new() {
+                                    Font         = Font.AxisSmall,
+                                    TextAlign    = Anchor.BottomRight,
+                                    TextColor    = Theme.Color(ThemeColor.Text),
+                                    TextOffset   = new(0, 0),
+                                    OutlineColor = Theme.Color(ThemeColor.TextOutline),
+                                    OutlineWidth = 1,
+                                }
+                            ),
+                            new(
+                                id: "SanctuaryIcon",
+                                anchor: Anchor.MiddleRight,
+                                text: FontAwesomeIcon.Moon.ToIconString(),
+                                style: new() {
+                                    Font       = Font.FontAwesomeSmall,
+                                    TextOffset = new(2, 0),
+                                    TextColor  = Theme.Color(ThemeColor.TextMuted)
+                                }
+                            ),
+                        ]
                     ),
                     new(
                         id: "Info",

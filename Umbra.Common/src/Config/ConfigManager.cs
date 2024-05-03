@@ -50,29 +50,13 @@ public static class ConfigManager
                 Cvars[id] = cvar;
             }
 
-            if (attr.Category != null) {
-                cvar.Category = attr.Category;
-            }
-
-            if (attr.Min != float.MinValue) {
-                cvar.Min = attr.Min;
-            }
-
-            if (attr.Max != float.MaxValue) {
-                cvar.Max = attr.Max;
-            }
-
-            if (attr.Step != 0) {
-                cvar.Step = attr.Step;
-            }
-
-            if (attr.Options.Count > 0) {
-                cvar.Options = attr.Options;
-            }
-
-            if (attr.RequiresRestart) {
-                cvar.RequiresRestart = true;
-            }
+            if (attr.Category != null) cvar.Category = attr.Category;
+            if (attr.SubCategory != null) cvar.SubCategory = attr.SubCategory;
+            if (attr.Min != float.MinValue) cvar.Min = attr.Min;
+            if (attr.Max != float.MaxValue) cvar.Max = attr.Max;
+            if (attr.Step != 0) cvar.Step = attr.Step;
+            if (attr.Options.Count > 0) cvar.Options = attr.Options;
+            if (attr.RequiresRestart) cvar.RequiresRestart = true;
 
             if (!EqualityComparer<object>.Default.Equals(cvar.Default, defaultValue)) {
                 throw new($"Config variable {id} has conflicting default values.");
@@ -89,6 +73,7 @@ public static class ConfigManager
     [WhenFrameworkDisposing]
     public static void WhenFrameworkDisposing()
     {
+        _debounceTimer?.Dispose();
         Cvars.Clear();
     }
 
@@ -101,6 +86,11 @@ public static class ConfigManager
             .Distinct()
             .OrderBy(c => c)
             .ToList()!;
+    }
+
+    public static Cvar? GetCvar(string id)
+    {
+        return Cvars.GetValueOrDefault(id);
     }
 
     public static List<Cvar> GetVariablesFromCategory(string category)
@@ -170,6 +160,9 @@ public static class ConfigManager
 
     private static void Persist(object? _)
     {
+        // Safety net to prevent overwriting the config file with an empty object.
+        if (Cvars.Count == 0) return;
+
         var data = new Dictionary<string, object?>();
 
         foreach (var cvar in Cvars.Values) {
@@ -230,6 +223,7 @@ public class Cvar(string id, object? defaultValue)
     public readonly   object?            Default = defaultValue;
     public            List<string>?      Options = [];
     public            string?            Category;
+    public            string?            SubCategory;
     public            object?            Value = defaultValue;
     public            float?             Min;
     public            float?             Max;

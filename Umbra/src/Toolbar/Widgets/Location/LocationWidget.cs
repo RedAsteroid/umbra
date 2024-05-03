@@ -23,10 +23,13 @@ namespace Umbra.Toolbar.Widgets.Location;
 [Service]
 internal partial class LocationWidget : IToolbarWidget
 {
-    [ConfigVariable("Toolbar.Widget.Location.Enabled", "ToolbarWidgets")]
+    [ConfigVariable("Toolbar.Widget.Location.Enabled", "EnabledWidgets")]
     private static bool Enabled { get; set; } = true;
 
-    private readonly IPlayer       _player;
+    [ConfigVariable("Toolbar.Widget.Location.ItemSpacing", "ToolbarSettings", "ToolbarCustomization", min: 0, max: 600)]
+    private static int ItemSpacing { get; set; } = 0;
+
+    private readonly IPlayer      _player;
     private readonly IZoneManager _zoneManager;
 
     private uint _lastWeatherIconId = 0;
@@ -51,16 +54,17 @@ internal partial class LocationWidget : IToolbarWidget
         UpdateDropdownWidget();
     }
 
-    public void OnUpdate() { }
-
     private void UpdateToolbarWidget()
     {
         IZone            zone    = _zoneManager.CurrentZone;
         WeatherForecast? weather = zone.CurrentWeather;
 
         (string zoneName, string distName) = GetLocationNames();
-        Element.Get("Location.Name").Text  = zoneName;
-        Element.Get("Location.Info").Text  = distName;
+
+        Element.Get("Location").Margin                       = new(right: ItemSpacing);
+        Element.Get("Location.Name.Label").Text              = zoneName;
+        Element.Get("Location.Info").Text                    = distName;
+        Element.Get("Location.Name.SanctuaryIcon").IsVisible = zone.TerritoryIntendedUse == 0;
 
         if (weather == null) {
             // This should theoretically never happen, but just in case.
@@ -85,6 +89,8 @@ internal partial class LocationWidget : IToolbarWidget
         }
     }
 
+    public void OnUpdate() { }
+
     private void UpdateDropdownWidget()
     {
         if (!_dropdownElement.IsVisible) return;
@@ -106,7 +112,7 @@ internal partial class LocationWidget : IToolbarWidget
         var topColor = color.ToUint().ApplyAlphaComponent(0.35f);
         var botColor = color.ToUint().ApplyAlphaComponent(0.45f);
 
-        gradTop.Gradient = Gradient.Vertical(0, topColor);
+        gradTop.Gradient = Gradient.Vertical(0,        topColor);
         gradBot.Gradient = Gradient.Vertical(botColor, 0);
 
         for (int i = 0; i < 6; i++) {

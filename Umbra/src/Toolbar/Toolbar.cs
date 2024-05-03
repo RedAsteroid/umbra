@@ -22,7 +22,7 @@ using Umbra.Interface;
 namespace Umbra.Toolbar;
 
 [Service]
-internal partial class Toolbar(IPlayer player, IToolbarWidget[] widgets)
+internal partial class Toolbar(IPlayer player, IToolbarWidget[] widgets, UmbraVisibility visibility)
 {
     public const int Height = 32;
 
@@ -34,10 +34,12 @@ internal partial class Toolbar(IPlayer player, IToolbarWidget[] widgets)
 
     private readonly List<IToolbarWidget> _widgets = [..widgets];
 
-    [OnDraw]
+    [OnDraw(executionOrder: 10)]
     public void OnDraw()
     {
-        if (!Enabled || player.IsInCutscene) {
+        if (!visibility.IsVisible()) return;
+
+        if (!Enabled) {
             _element.IsVisible = false;
             return;
         }
@@ -56,6 +58,8 @@ internal partial class Toolbar(IPlayer player, IToolbarWidget[] widgets)
     [OnTick(interval: 23)]
     public void OnTick()
     {
+        if (!Enabled || player.IsEditingHud) return;
+
         foreach (var widget in _widgets) {
             widget.OnUpdate();
         }

@@ -57,6 +57,16 @@ public interface IPlayer
     public bool IsOccupied { get; }
 
     /// <summary>
+    /// True if the player is currently between areas.
+    /// </summary>
+    public bool IsBetweenAreas { get; }
+
+    /// <summary>
+    /// True if the player is currently in idle cam (afk) mode.
+    /// </summary>
+    public bool IsInIdleCam { get; }
+
+    /// <summary>
     /// True if the player is currently watching a cutscene.
     /// </summary>
     public bool IsInCutscene { get; }
@@ -72,10 +82,20 @@ public interface IPlayer
     public bool IsJumping { get; }
 
     /// <summary>
+    /// True if the player is currently diving.
+    /// </summary>
+    public bool IsDiving { get; }
+
+    /// <summary>
     /// True if the player is currently bound by duty, meaning they can't
     /// teleport or use the Duty Finder.
     /// </summary>
     public bool IsBoundByDuty { get; }
+
+    /// <summary>
+    /// True if the player is currently editing the HUD layout.
+    /// </summary>
+    public bool IsEditingHud { get; }
 
     /// <summary>
     /// True if the player can, and is allowed to, use the teleport action.

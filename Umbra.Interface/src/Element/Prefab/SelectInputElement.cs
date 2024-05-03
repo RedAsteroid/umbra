@@ -46,13 +46,19 @@ public class SelectInputElement : Element
         ImGui.SetCursorScreenPos(ContentBox.Min);
 
         ImGui.PushStyleVar(ImGuiStyleVar.FramePadding,  new Vector2(8, 4));
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(8, 4));
         ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 5);
+        ImGui.PushStyleVar(ImGuiStyleVar.PopupRounding, 5);
+
         ImGui.PushStyleColor(ImGuiCol.Text,           Theme.Color(ThemeColor.Text));
+        ImGui.PushStyleColor(ImGuiCol.PopupBg,        Theme.Color(ThemeColor.Background));
+        ImGui.PushStyleColor(ImGuiCol.Button,         Theme.Color(ThemeColor.BackgroundActive));
+        ImGui.PushStyleColor(ImGuiCol.ButtonHovered,  Theme.Color(ThemeColor.BackgroundLight));
         ImGui.PushStyleColor(ImGuiCol.FrameBg,        Theme.Color(ThemeColor.BackgroundActive));
         ImGui.PushStyleColor(ImGuiCol.FrameBgHovered, Theme.Color(ThemeColor.BackgroundLight));
         ImGui.PushStyleColor(ImGuiCol.FrameBgActive,  Theme.Color(ThemeColor.BackgroundActive));
 
-        ImGui.SetNextItemWidth(Parent!.ContentBox.Width);
+        ImGui.SetNextItemWidth((Parent!.ContentBox.Width / ScaleFactor) - (Parent!.Padding.Horizontal * ScaleFactor));
 
         if (ImGui.BeginCombo("", value)) {
             foreach (string option in Options) {
@@ -69,12 +75,11 @@ public class SelectInputElement : Element
                     ImGui.SetItemDefaultFocus();
                 }
             }
-
             ImGui.EndCombo();
         }
 
-        ImGui.PopStyleColor(4);
-        ImGui.PopStyleVar(2);
+        ImGui.PopStyleColor(7);
+        ImGui.PopStyleVar(4);
         ImGui.PopID();
     }
 }
