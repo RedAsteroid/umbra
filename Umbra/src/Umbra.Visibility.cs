@@ -14,14 +14,13 @@
  *     GNU Affero General Public License for more details.
  */
 
-using Dalamud.Plugin.Services;
 using Umbra.Common;
 using Umbra.Game;
 
 namespace Umbra;
 
 [Service]
-public class UmbraVisibility(IPlayer player)
+internal sealed class UmbraVisibility(IPlayer player)
 {
     [ConfigVariable("General.ShowInCutscenes", "General", "VisibilitySettings")]
     public static bool ShowInCutscenes { get; set; } = false;
@@ -37,6 +36,12 @@ public class UmbraVisibility(IPlayer player)
 
     [ConfigVariable("General.ShowDuringIdleCam", "General", "VisibilitySettings")]
     public static bool ShowDuringIdleCam { get; set; } = false;
+
+    [ConfigVariable("General.ShowInDuty", "General", "VisibilitySettings")]
+    public static bool ShowInDuty { get; set; } = true;
+
+    [ConfigVariable("General.ShowInCombat", "General", "VisibilitySettings")]
+    public static bool ShowInCombat { get; set; } = true;
 
     [OnTick(interval: 500)]
     internal void OnTick()
@@ -55,6 +60,12 @@ public class UmbraVisibility(IPlayer player)
             return false;
 
         if (player.IsInIdleCam && !ShowDuringIdleCam)
+            return false;
+
+        if (player.IsInCombat && !ShowInCombat)
+            return false;
+
+        if (player.IsBoundByDuty && !ShowInDuty)
             return false;
 
         return true;

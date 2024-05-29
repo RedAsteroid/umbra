@@ -17,6 +17,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using Lumina.Data;
 using Newtonsoft.Json;
 
 namespace Umbra.Common;
@@ -48,6 +49,16 @@ public static class I18N
     public static bool Has(string key)
     {
         return Dict.ContainsKey(key);
+    }
+
+    public static string GetCurrentLanguage()
+    {
+        if (LanguageOverride != "None" && Translations.ContainsKey(LanguageOverride))
+            return LanguageOverride;
+
+        return Translations.ContainsKey(Framework.DalamudPlugin.UiLanguage)
+            ? Framework.DalamudPlugin.UiLanguage
+            : "en";
     }
 
     private static Dictionary<string, string> Dict {
@@ -107,6 +118,17 @@ public static class I18N
 
                 if (!Translations[lang].ContainsKey(key)) {
                     Logger.Warning($"Language \"{lang}\" is missing translation \"{key}\".");
+                }
+            }
+        }
+
+        // Find obsolete translations from other languages than english.
+        foreach (string lang in Translations.Keys) {
+            if (lang == "en") continue;
+
+            foreach (string key in Translations[lang].Keys) {
+                if (!en.ContainsKey(key)) {
+                    Logger.Warning($"Language \"{lang}\" has obsolete translation \"{key}\".");
                 }
             }
         }
