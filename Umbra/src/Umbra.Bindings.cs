@@ -72,7 +72,7 @@ internal sealed class UmbraBindings : IDisposable
         _commandManager.AddHandler(
             "/umbra",
             new(HandleUmbraCommand) {
-                HelpMessage = "Opens the Umbra settings window.",
+                HelpMessage = "打开 Umbra 设置窗口",
                 ShowInHelp  = true,
             }
         );
@@ -80,7 +80,7 @@ internal sealed class UmbraBindings : IDisposable
         _commandManager.AddHandler(
             "/umbra-toggle",
             new(HandleUmbraCommand) {
-                HelpMessage = "Toggles a specific Umbra setting. Usage: /umbra-toggle <setting>. For a list of settings, use /umbra-toggle without arguments.",
+                HelpMessage = "切换指定的 Umbra 设置\n            用法: /umbra -toggle <设置>\n            如需查看设置列表请使用不带参数的命令: /umbra-toggle",
                 ShowInHelp  = true,
             }
         );
@@ -88,7 +88,7 @@ internal sealed class UmbraBindings : IDisposable
         _commandManager.AddHandler(
             "/umbra-toolbar-profile",
             new(HandleUmbraCommand) {
-                HelpMessage = "Switches the toolbar profile. Usage: /umbra-toolbar-profile <profile name>.",
+                HelpMessage = "切换工具栏配置\n           用法: /umbra-toolbar-profile <配置名称>",
                 ShowInHelp  = true,
             }
         );
