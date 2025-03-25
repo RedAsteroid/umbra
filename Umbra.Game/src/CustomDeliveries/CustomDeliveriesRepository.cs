@@ -97,7 +97,7 @@ internal sealed unsafe class CustomDeliveriesRepository : ICustomDeliveriesRepos
         DeliveriesRemainingThisWeek = ssm->GetRemainingAllowances();
 
         var adjustedTimestamp               = ssm->TimeAdjustmentForBonusGuarantee + FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.GetServerTime();
-        var npcCount                        = ssm->SatisfactionRanks.Length;
+        var npcCount = 10; // ssm->SatisfactionRanks.Length;
         var calculatedBonusGuaranteeRowId   = (uint)((adjustedTimestamp - 1657008000) / 604800 % npcCount);
         var satisfactionBonusGuarentee      = DataManager.GetExcelSheet<SatisfactionBonusGuarantee>().GetRow(ssm->BonusGuaranteeRowId != 0xFF ? ssm->BonusGuaranteeRowId : calculatedBonusGuaranteeRowId);
 
