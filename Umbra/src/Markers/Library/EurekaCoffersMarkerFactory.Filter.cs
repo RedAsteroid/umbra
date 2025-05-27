@@ -31,7 +31,8 @@ internal sealed partial class EurekaCoffersMarkerFactory
         { "en", "You sense something" },
         { "de", "Du spürst eine Schatztruhe" },
         { "fr", "Le trésor est" },
-        { "ja", "財宝の気配を" }
+        { "ja", "財宝の気配を" },
+        { "zh", "财宝好像是在" }
     };
 
     private Dictionary<string, string> CarrotTexts { get; } = new() {
@@ -47,6 +48,10 @@ internal sealed partial class EurekaCoffersMarkerFactory
         }, {
             "ja",
             @"財宝の気配を、(?<dir>北|北東|東|南東|南|南西|西|北西)方向の\s*(?<dist>(とても遠く|遠く))?から感じているようだ(。|……|！)?"
+        },
+        {
+            "zh",
+            @"财宝好像是在(?<dir>(正北|正东|正西|正南|东北|东南|西北|西南))方向(?<dist>(稍远|很远))的地方！"
         }
     };
 
@@ -54,7 +59,8 @@ internal sealed partial class EurekaCoffersMarkerFactory
         { "en", ["far", "far, far"] },
         { "de", ["weit", "sehr weit"] },
         { "fr", ["assez loin", "très loin"] },
-        { "ja", ["遠く", "とても遠く"] }
+        { "ja", ["遠く", "とても遠く"] },
+        { "zh", ["稍远", "很远"] }
     };
 
     private Dictionary<string, Dictionary<string, string>> DirectionTexts { get; } = new() {
@@ -102,7 +108,19 @@ internal sealed partial class EurekaCoffersMarkerFactory
                 { "西", "west" },
                 { "北西", "northwest" }
             }
-        }
+        },
+        {
+            "zh", new() {
+                { "正北", "north" },
+                { "东北", "northeast" },
+                { "正东", "east" },
+                { "东南", "southeast" },
+                { "正南", "south" },
+                { "西南", "southwest" },
+                { "正西", "west" },
+                { "西北", "northwest" }
+            }
+        },
     };
 
     private void OnChatMessage(
