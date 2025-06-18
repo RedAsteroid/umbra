@@ -8,15 +8,15 @@ internal sealed partial class EmoteListWidget
     protected override IEnumerable<IWidgetConfigVariable> GetConfigVariables()
     {
         return [
+            ..base.GetConfigVariables(),
             new StringWidgetConfigVariable(
                 "Label",
                 I18N.Translate("Widget.EmoteList.Config.Label.Name"),
                 I18N.Translate("Widget.EmoteList.Config.Label.Description"),
-                I18N.Translate("Widget.EmoteList.Config.Label.Default")
-            ) { Category = I18N.Translate("Widget.ConfigCategory.WidgetAppearance") },
-            DefaultIconConfigVariable(64015),
-            ..DefaultToolbarWidgetConfigVariables,
-            ..SingleLabelTextOffsetVariables,
+                I18N.Translate("Widget.EmoteList.Config.Label.Default"),
+                1024,
+                true
+            ),
             ..GetEmoteListConfigVariables(0),
             ..GetEmoteListConfigVariables(1),
             ..GetEmoteListConfigVariables(2),
@@ -40,7 +40,9 @@ internal sealed partial class EmoteListWidget
                 $"Category_{listId}_Name",
                 I18N.Translate("Widget.EmoteList.Config.CategoryName.Name", listId + 1),
                 I18N.Translate("Widget.EmoteList.Config.CategoryName.Description"),
-                listId == 0 ? I18N.Translate("Widget.EmoteList.Name") : ""
+                listId == 0 ? I18N.Translate("Widget.EmoteList.Name") : "",
+                1024,
+                true
             ) { Category = I18N.Translate("Widget.ConfigCategory.MenuAppearance") },
         ];
 

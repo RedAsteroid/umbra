@@ -1,19 +1,3 @@
-/* Umbra.Game | (c) 2024 by Una         ____ ___        ___.
- * Licensed under the terms of AGPL-3  |    |   \ _____ \_ |__ _______ _____
- *                                     |    |   //     \ | __ \\_  __ \\__  \
- * https://github.com/una-xiv/umbra    |    |  /|  Y Y  \| \_\ \|  | \/ / __ \_
- *                                     |______//__|_|  /____  /|__|   (____  /
- *     Umbra.Game is free software: you can          \/     \/             \/
- *     redistribute it and/or modify it under the terms of the GNU Affero
- *     General Public License as published by the Free Software Foundation,
- *     either version 3 of the License, or (at your option) any later version.
- *
- *     Umbra.Game is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU Affero General Public License for more details.
- */
-
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -69,7 +53,7 @@ internal sealed class Zone : IZone
         MapSheet            = dataManager.GetExcelSheet<Sheet.Map>().GetRow(zoneId);
         Type                = (TerritoryType)MapSheet.TerritoryType.Value.TerritoryIntendedUse.Value.RowId;
         TerritoryId         = MapSheet.TerritoryType.RowId;
-        Name                = MapSheet.PlaceName.Value.Name.ExtractText();
+        Name                = GetHousingZoneName() ?? MapSheet.PlaceName.Value.Name.ExtractText();
         SubName             = MapSheet.PlaceNameSub.Value.Name.ExtractText();
         RegionName          = MapSheet.PlaceNameRegion.Value.Name.ExtractText();
         Offset              = new(MapSheet.OffsetX, MapSheet.OffsetY);
@@ -108,6 +92,7 @@ internal sealed class Zone : IZone
 
         IsSanctuary = territoryInfo->InSanctuary;
         InstanceId  = UIState.Instance()->PublicInstance.InstanceId;
+        Name = GetHousingZoneName() ?? MapSheet.PlaceName.Value.Name.ExtractText();
 
         HousingManager* housingManager = HousingManager.Instance();
 
@@ -138,7 +123,8 @@ internal sealed class Zone : IZone
             }
 
             DynamicMarkers.AddRange(
-                map->ActiveLevequestMarkers
+                map->ActiveLevequestMarker
+                    .MarkerData
                     .ToList()
                     .Where(m => m.MapId == Id)
                     .Select(m => _markerFactory.FromMapMarkerData(MapSheet, m))
@@ -233,6 +219,21 @@ internal sealed class Zone : IZone
                 CurrentWeather = new(time, timeString, WeatherForecast[0].Name, WeatherForecast[0].IconId);
             }
         }
+    }
+
+    private unsafe string? GetHousingZoneName()
+    {
+        if (!HousingManager.Instance()->IsInside())
+            return null;
+
+        var housingTerritoryTypeId = HousingManager.GetOriginalHouseTerritoryTypeId();
+        if (housingTerritoryTypeId == 0)
+            return null;
+
+        if (!_dataManager.Excel.GetSheet<Sheet.TerritoryType>().TryGetRow(housingTerritoryTypeId, out var territory))
+            return null;
+
+        return territory.Map.ValueNullable?.PlaceName.ValueNullable?.Name.ExtractText();
     }
 
     private unsafe string GetHousingDistrictName()

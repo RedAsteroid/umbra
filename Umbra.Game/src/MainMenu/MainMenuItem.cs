@@ -1,19 +1,3 @@
-/* Umbra.Game | (c) 2024 by Una         ____ ___        ___.
- * Licensed under the terms of AGPL-3  |    |   \ _____ \_ |__ _______ _____
- *                                     |    |   //     \ | __ \\_  __ \\__  \
- * https://github.com/una-xiv/umbra    |    |  /|  Y Y  \| \_\ \|  | \/ / __ \_
- *                                     |______//__|_|  /____  /|__|   (____  /
- *     Umbra.Game is free software: you can          \/     \/             \/
- *     redistribute it and/or modify it under the terms of the GNU Affero
- *     General Public License as published by the Free Software Foundation,
- *     either version 3 of the License, or (at your option) any later version.
- *
- *     Umbra.Game is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU Affero General Public License for more details.
- */
-
 using System;
 using Dalamud.Memory;
 using Dalamud.Utility;
@@ -86,7 +70,7 @@ public sealed class MainMenuItem : IDisposable
         if (agentHud == null) return;
 
         ThreadSafety.AssertMainThread();
-        Name = MemoryHelper.ReadSeStringNullTerminated((nint)agentHud->GetMainCommandString(commandId)).ToString();
+        Name = agentHud->GetMainCommandString(commandId).ExtractText().StripSoftHyphen();
 
         if (Name.Contains('[')) {
             var tmp = Name.Split('[');
@@ -128,9 +112,11 @@ public sealed class MainMenuItem : IDisposable
         AgentHUD* agentHud = AgentHUD.Instance();
         if (agentHud == null) return;
 
+        if (CommandId == null) return;
+
         IsDisabled = false
             == (
-                agentHud->IsMainCommandEnabled(CommandId!.Value) && uiModule->IsMainCommandUnlocked(CommandId!.Value)
+                agentHud->IsMainCommandEnabled(CommandId.Value) && uiModule->IsMainCommandUnlocked(CommandId.Value)
             );
 
         if (CommandId == 36) {

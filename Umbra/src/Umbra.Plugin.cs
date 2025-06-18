@@ -18,6 +18,9 @@ using System.Reflection;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using ImGuiNET;
+using System.Diagnostics;
+using System.Numerics;
 using Umbra.Common;
 using Una.Drawing;
 using Logger = Umbra.Common.Logger;
@@ -40,12 +43,14 @@ internal sealed class Plugin : IDalamudPlugin
         PluginInterface = plugin;
         plugin.Inject(this);
 
-        DrawingLib.Setup(plugin);
+        UmbraDrawing.Initialize(plugin);
 
         RegisterServices();
 
         ClientState.Login  += OnLogin;
         ClientState.Logout += OnLogout;
+
+        PluginInterface.UiBuilder.Draw += UpdateDevBar;
 
         if (ClientState.IsLoggedIn) OnLogin();
     }
@@ -57,15 +62,16 @@ internal sealed class Plugin : IDalamudPlugin
         ClientState.Login  -= OnLogin;
         ClientState.Logout -= OnLogout;
 
-        DrawingLib.Dispose();
+        PluginInterface.UiBuilder.Draw -= UpdateDevBar;
+
+        UmbraDrawing.Dispose();
     }
 
     private void OnLogin()
     {
         Framework
-            .Compile(DalamudFramework, PluginInterface, ClientState.LocalContentId)
-            .ContinueWith(
-                task => {
+           .Compile(DalamudFramework, PluginInterface, ClientState.LocalContentId)
+           .ContinueWith(task => {
                     if (task.IsFaulted) {
                         Logger.Error(
                             $"Umbra failed to initialize: {task.Exception.InnerException?.Message ?? task.Exception.Message}"
@@ -85,5 +91,41 @@ internal sealed class Plugin : IDalamudPlugin
         Framework.AddLogTarget(new DefaultLogTarget(PluginLog, ChatGui));
         Framework.RegisterAssembly(Assembly.GetExecutingAssembly());
         Framework.RegisterAssembly(typeof(Game.EntryPoint).Assembly);
+    }
+
+    private void UpdateDevBar()
+    {
+        if (!PluginInterface.IsDevMenuOpen) return;
+
+        if (ImGui.BeginMainMenuBar()) {
+            if (ImGui.BeginMenu("Umbra")) {
+                if (ImGui.MenuItem("Show Node Inspector", string.Empty, DrawingLib.ShowDebugWindow)) {
+                    DrawingLib.ShowDebugWindow = !DrawingLib.ShowDebugWindow;
+                }
+                if (ImGui.MenuItem("Draw Bounding Boxes", string.Empty, Node.DrawDebugBoundingBoxes)) {
+                    Node.DrawDebugBoundingBoxes = !Node.DrawDebugBoundingBoxes;
+                }
+                if (ImGui.MenuItem("Draw Reflow & Repaint Boxes", string.Empty, Node.DrawDebugPaintAndReflowBoxes)) {
+                    Node.DrawDebugPaintAndReflowBoxes = !Node.DrawDebugPaintAndReflowBoxes;
+                }
+                
+                ImGui.Separator();
+                if (ImGui.MenuItem("Open config directory")) {
+                    Process.Start(new ProcessStartInfo {
+                        FileName        = PluginInterface.ConfigDirectory.FullName,
+                        UseShellExecute = true,
+                        Verb            = "open"
+                    });
+                }
+
+                ImGui.Separator();
+                ImGui.TextColored(new Vector4(1, 1, 1, 0.5f), "Umbra v" + Assembly.GetExecutingAssembly().GetName().Version);
+                ImGui.SameLine();
+                ImGui.Spacing();
+                ImGui.EndMenu();
+            }
+
+            ImGui.EndMainMenuBar();
+        }
     }
 }

@@ -1,19 +1,3 @@
-/* Umbra.Game | (c) 2024 by Una         ____ ___        ___.
- * Licensed under the terms of AGPL-3  |    |   \ _____ \_ |__ _______ _____
- *                                     |    |   //     \ | __ \\_  __ \\__  \
- * https://github.com/una-xiv/umbra    |    |  /|  Y Y  \| \_\ \|  | \/ / __ \_
- *                                     |______//__|_|  /____  /|__|   (____  /
- *     Umbra.Game is free software: you can          \/     \/             \/
- *     redistribute it and/or modify it under the terms of the GNU Affero
- *     General Public License as published by the Free Software Foundation,
- *     either version 3 of the License, or (at your option) any later version.
- *
- *     Umbra.Game is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU Affero General Public License for more details.
- */
-
 using System;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
@@ -65,14 +49,15 @@ internal sealed class CompanionManager : ICompanionManager
         UIState* ui = UIState.Instance();
         if (ui == null) return;
 
+        // Test if the player has its first mount unlocked.
+        if (!UIModule.Instance()->IsMainCommandUnlocked(42)) return;
+
         var buddy = ui->Buddy.CompanionInfo;
-        if (buddy.Rank == 0) return;
 
         ExcelSheet<BuddyRank> rankSheet = _dataManager.GetExcelSheet<BuddyRank>();
         if (!rankSheet.HasRow(buddy.Rank)) return;
 
-        var rank = rankSheet.GetRow(buddy.Rank);
-
+        var  rank     = rankSheet.GetRow(buddy.Rank);
         uint objectId = ui->Buddy.CompanionInfo.Companion->EntityId;
 
         IsActive        = objectId > 0 && null != _objectTable.SearchById(objectId);
@@ -99,7 +84,7 @@ internal sealed class CompanionManager : ICompanionManager
     public unsafe bool CanSummon()
     {
         bool isOk = HasGysahlGreens
-            && _player is { IsBoundByInstancedDuty: false, IsOccupied: false, IsCasting: false, IsDead: false };
+                    && _player is { IsBoundByInstancedDuty: false, IsOccupied: false, IsCasting: false, IsDead: false };
 
         ActionManager* am = ActionManager.Instance();
         if (am == null) return isOk;

@@ -1,28 +1,11 @@
-﻿/* Umbra | (c) 2024 by Una              ____ ___        ___.
- * Licensed under the terms of AGPL-3  |    |   \ _____ \_ |__ _______ _____
- *                                     |    |   //     \ | __ \\_  __ \\__  \
- * https://github.com/una-xiv/umbra    |    |  /|  Y Y  \| \_\ \|  | \/ / __ \_
- *                                     |______//__|_|  /____  /|__|   (____  /
- *     Umbra is free software: you can redistribute  \/     \/             \/
- *     it and/or modify it under the terms of the GNU Affero General Public
- *     License as published by the Free Software Foundation, either version 3
- *     of the License, or (at your option) any later version.
- *
- *     Umbra UI is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU Affero General Public License for more details.
- */
-
-using ImGuiNET;
+﻿using ImGuiNET;
 using Lumina.Misc;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using Umbra.Common;
 using Umbra.Game;
-using Umbra.Windows;
-using Umbra.Windows.Library.WidgetConfig;
 using Una.Drawing;
 
 namespace Umbra.Widgets.System;
@@ -65,6 +48,7 @@ internal sealed partial class WidgetManager : IDisposable
         }
 
         ConfigManager.CvarChanged += OnCvarChanged;
+        
         LoadProfileData();
         LoadState();
     }
@@ -94,8 +78,8 @@ internal sealed partial class WidgetManager : IDisposable
         foreach (var handler in OnWidgetRelocated?.GetInvocationList() ?? [])
             OnWidgetRelocated -= (Action<ToolbarWidget, string>)handler;
 
-        foreach (var handler in OnPopupOpened?.GetInvocationList() ?? []) OnPopupOpened -= (Action<WidgetPopup>)handler;
-        foreach (var handler in OnPopupClosed?.GetInvocationList() ?? []) OnPopupClosed -= (Action<WidgetPopup>)handler;
+        foreach (var handler in OnPopupOpened?.GetInvocationList() ?? []) OnPopupOpened   -= (Action<WidgetPopup>)handler;
+        foreach (var handler in OnPopupClosed?.GetInvocationList() ?? []) OnPopupClosed   -= (Action<WidgetPopup>)handler;
         foreach (var handler in ProfileCreated?.GetInvocationList() ?? []) ProfileCreated -= (Action<string>)handler;
         foreach (var handler in ProfileRemoved?.GetInvocationList() ?? []) ProfileRemoved -= (Action<string>)handler;
 
@@ -114,34 +98,6 @@ internal sealed partial class WidgetManager : IDisposable
     }
 
     /// <summary>
-    /// Registers a widget type with the given name.
-    /// </summary>
-    /// <param name="info">An object containing information about the widget.</param>
-    /// <typeparam name="TWidgetClass">The type of the widget.</typeparam>
-    public void RegisterWidget<TWidgetClass>(WidgetInfo info) where TWidgetClass : ToolbarWidget
-    {
-        if (_widgetTypes.ContainsKey(info.Id))
-            throw new InvalidOperationException($"A widget with the name '{info.Id}' is already registered.");
-
-        _widgetTypes[info.Id] = typeof(TWidgetClass);
-        _widgetInfos[info.Id] = info;
-
-        LoadState();
-    }
-
-    public void UnregisterWidget(string name)
-    {
-        if (!_widgetTypes.ContainsKey(name)) return;
-
-        _widgetTypes.Remove(name);
-        _widgetInfos.Remove(name);
-
-        foreach (var widget in _instances.Values.Where(w => w.Info.Id == name).ToList()) {
-            RemoveWidget(widget.Id, false);
-        }
-    }
-
-    /// <summary>
     /// Returns an instance of a widget with the given GUID.
     /// </summary>
     public ToolbarWidget GetInstance(string guid)
@@ -157,6 +113,15 @@ internal sealed partial class WidgetManager : IDisposable
     public List<WidgetInfo> GetWidgetInfoList()
     {
         return _widgetInfos.Values.ToList();
+    }
+
+    /// <summary>
+    /// Returns the <see cref="WidgetInfo"/> object of a widget with the given
+    /// ID or NULL if no such widget exists.
+    /// </summary>
+    public WidgetInfo? GetWidgetInfo(string id)
+    {
+        return _widgetInfos.GetValueOrDefault(id);
     }
 
     public List<ToolbarWidget> GetWidgetInstances()
@@ -184,36 +149,43 @@ internal sealed partial class WidgetManager : IDisposable
         bool                        saveState    = true
     )
     {
-        if (!_widgetTypes.TryGetValue(name, out var type))
-            throw new InvalidOperationException($"No widget with the name '{name}' is registered.");
+        CrashLogger.Guard($"Failed to create widget: {name}", $"An error occurred while instantiating the widget {name}. This should never happen. Please report this to the #support channel in Umbra's Discord.", () => {
+            if (!_widgetTypes.TryGetValue(name, out var type))
+                throw new InvalidOperationException($"No widget with the name '{name}' is registered.");
 
-        if (!_widgetInfos.TryGetValue(name, out var info))
-            throw new InvalidOperationException($"No widget info for the widget '{name}' is available.");
+            if (!_widgetInfos.TryGetValue(name, out var info))
+                throw new InvalidOperationException($"No widget info for the widget '{name}' is available.");
 
-        var widget = (ToolbarWidget)Activator.CreateInstance(type, info, guid, configValues)!;
-        var panel  = Toolbar.GetPanel(location);
+            var panel = Toolbar.GetPanel(location);
+            if (panel == null) {
+                Logger.Error($"Attempted to create a widget in an invalid location '{location}'.");
+                return;
+            }
 
-        _instances[widget.Id] = widget;
+            var widget = (ToolbarWidget)Activator.CreateInstance(type, info, guid, configValues)!;
 
-        widget.SortIndex =   sortIndex ?? panel.ChildNodes.Count;
-        widget.Location  =   location;
-        widget.Node.Id   ??= $"UmbraWidget_{Crc32.Get(widget.Id)}";
+            widget.SortIndex =   sortIndex ?? panel.ChildNodes.Count;
+            widget.Location  =   location;
+            widget.Node.Id   ??= $"UmbraWidget_{Crc32.Get(widget.Id)}";
 
-        widget.Setup();
-        widget.OpenPopup        += OpenPopup;
-        widget.OpenPopupDelayed += OpenPopupIfAnyIsOpen;
+            widget.Setup();
+            widget.OpenPopup        += OpenPopup;
+            widget.OpenPopupDelayed += OpenPopupIfAnyIsOpen;
 
-        if (EnableQuickSettingAccess && _subscribedQuickAccessNodes.Add(widget.Node)) {
-            widget.Node.OnRightClick += InvokeInstanceQuickSettings;
-        }
+            _instances[widget.Id] = widget;
 
-        panel.AppendChild(widget.Node);
-        SolveSortIndices(widget.Location);
+            if (EnableQuickSettingAccess && _subscribedQuickAccessNodes.Add(widget.Node)) {
+                widget.Node.OnRightClick += InvokeInstanceQuickSettings;
+            }
 
-        OnWidgetCreated?.Invoke(widget);
+            panel.AppendChild(widget.Node);
+            SolveSortIndices(widget.Location);
 
-        SaveWidgetState(widget.Id);
-        if (saveState) SaveState();
+            OnWidgetCreated?.Invoke(widget);
+
+            SaveWidgetState(widget.Id);
+            if (saveState) SaveState();
+        }, false);
     }
 
     public void RemoveWidget(string guid, bool saveState = true)
@@ -248,9 +220,9 @@ internal sealed partial class WidgetManager : IDisposable
         int sortIndexStart = widget.SortIndex;
 
         var instances = _instances
-            .Values
-            .Where(w => w.Location == widget.Location && w.SortIndex > sortIndexStart)
-            .ToList();
+                       .Values
+                       .Where(w => w.Location == widget.Location && w.SortIndex > sortIndexStart)
+                       .ToList();
 
         if (instances.Count > 0) {
             foreach (var w in instances) {
@@ -289,33 +261,6 @@ internal sealed partial class WidgetManager : IDisposable
         );
     }
 
-    public void UpdateWidgetSortIndex(string id, int direction, bool allTheWay)
-    {
-        if (!_instances.TryGetValue(id, out var widget)) return;
-
-        if (false == allTheWay) {
-            // Swap the sort index of the widget with the one above or below it.
-            ToolbarWidget? replacementWidget = _instances.Values.FirstOrDefault(
-                w => w.Location == widget.Location && w.SortIndex == widget.SortIndex + direction
-            );
-
-            if (null == replacementWidget) return;
-
-            replacementWidget.SortIndex -= direction;
-            widget.SortIndex            += direction;
-
-            SolveSortIndices(widget.Location);
-            SaveWidgetState(replacementWidget.Id);
-            SaveWidgetState(widget.Id);
-        } else {
-            widget.SortIndex = direction == -1 ? int.MinValue : int.MaxValue;
-            SolveSortIndices(widget.Location);
-            SaveWidgetState(widget.Id);
-        }
-
-        SaveState();
-    }
-
     /// <summary>
     /// Returns the amount of instances of a widget with the given ID that are
     /// currently active on the toolbar.
@@ -334,10 +279,10 @@ internal sealed partial class WidgetManager : IDisposable
         if (_isLoadingState) return;
 
         List<ToolbarWidget> children = _instances
-            .Values
-            .Where(w => w.Node.ParentNode!.Id == location)
-            .OrderBy(w => w.SortIndex)
-            .ToList();
+                                      .Values
+                                      .Where(w => w.Node.ParentNode!.Id == location)
+                                      .OrderBy(w => w.SortIndex)
+                                      .ToList();
 
         for (var i = 0; i < children.Count; i++) {
             if (children[i].SortIndex == i) continue;
@@ -357,27 +302,26 @@ internal sealed partial class WidgetManager : IDisposable
             return;
         }
 
-        lock (_instances) {
-            foreach (var widget in _instances.Values) {
-                if (widget.Node.ParentNode is null) continue;
+        foreach (var widget in _instances.Values.ToImmutableArray()) {
+            if (widget.Node.ParentNode is null) continue;
+            
+            string panelId = widget.Node.ParentNode!.Id!;
 
-                string panelId = widget.Node.ParentNode!.Id!;
+            if (widget.Location != panelId) {
+                var panel = Toolbar.GetPanel(widget.Location);
+                if (panel == null) continue;
+                
+                panel.AppendChild(widget.Node);
+                SolveSortIndices(widget.Location);
+                SolveSortIndices(panelId);
 
-                if (widget.Location != panelId) {
-                    Toolbar.GetPanel(widget.Location).AppendChild(widget.Node);
-                    SolveSortIndices(widget.Location);
-                    SolveSortIndices(panelId);
-
-                    SaveWidgetState(widget.Id);
-                    SaveState();
-                    OnWidgetRelocated?.Invoke(widget, panelId);
-                }
-
-                widget.Update();
-
-                widget.Node.SortIndex  = widget.SortIndex;
-                widget.Node.IsDisabled = Player.IsEditingHud;
+                SaveWidgetState(widget.Id);
+                SaveState();
+                OnWidgetRelocated?.Invoke(widget, panelId);
             }
+            
+            widget.Update();
+            widget.Node.SortIndex = widget.SortIndex;
         }
     }
 

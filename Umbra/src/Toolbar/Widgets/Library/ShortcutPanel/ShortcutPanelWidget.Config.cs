@@ -16,27 +16,23 @@ internal sealed partial class ShortcutPanelWidget
                     I18N.Translate("Widget.ShortcutPanel.Config.CategoryName.Name",        i + 1),
                     I18N.Translate("Widget.ShortcutPanel.Config.CategoryName.Description", i + 1),
                     i == 0 ? Info.Name : "",
-                    32
+                    1024,
+                    true
                 ) { Category = I18N.Translate("Widget.ConfigCategory.MenuAppearance") }
             );
         }
 
         return [
+            ..base.GetConfigVariables(),
+            
             new StringWidgetConfigVariable(
                 "ButtonLabel",
                 I18N.Translate("Widget.ShortcutPanel.Config.ButtonLabel.Name"),
                 I18N.Translate("Widget.ShortcutPanel.Config.ButtonLabel.Description"),
                 Info.Name,
-                32
-            ) { Category = I18N.Translate("Widget.ConfigCategory.WidgetAppearance") },
-            new IconIdWidgetConfigVariable(
-                "ButtonIconId",
-                I18N.Translate("Widget.ShortcutPanel.Config.ButtonIconId.Name"),
-                I18N.Translate("Widget.ShortcutPanel.Config.ButtonIconId.Description"),
-                0
-            ) { Category = I18N.Translate("Widget.ConfigCategory.WidgetAppearance") },
-            ..DefaultToolbarWidgetConfigVariables,
-            ..SingleLabelTextOffsetVariables,
+                1024,
+                true
+            ),
             ..categoryNameFields,
             new IntegerWidgetConfigVariable(
                 "NumCols",

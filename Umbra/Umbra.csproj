@@ -1,38 +1,31 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
-    <Import Project="..\Dalamud.Plugin.Bootstrap.targets" />
-
+<Project Sdk="Dalamud.NET.Sdk/12.0.2">
     <PropertyGroup>
-        <TargetFramework>net8.0-windows</TargetFramework>
-        <Platforms>x64</Platforms>
-        <Nullable>enable</Nullable>
-        <LangVersion>latest</LangVersion>
-        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-        <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
-        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <OutputPath>..\out\$(Configuration)\</OutputPath>
+		<EnableDefaultNoneItems>true</EnableDefaultNoneItems>
     </PropertyGroup>
 
     <PropertyGroup>
         <Authors>Una</Authors>
         <Company>Una-XIV</Company>
-        <Version>2.3.10</Version>
+        <Version>3.0.8</Version>
         <Description>Umbra UI</Description>
-        <Copyright>(C)2024, by Una</Copyright>
+        <Copyright>(C)2025, by Una</Copyright>
         <PackageProjectUrl>https://github.com/una-xiv/umbra</PackageProjectUrl>
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
-        <Content Include="Umbra.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
+        <Content Include="Umbra.json" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="images\logo.png" LogicalName="Logo.png" />
-        <EmbeddedResource Include="images\shadow.png" LogicalName="Shadow.png" />
+        <EmbeddedResource Include="images\*.png"/>
+    </ItemGroup>
+    
+    <ItemGroup>
+        <EmbeddedResource Include="udt\**\*.*"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -46,14 +39,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Update="DalamudPackager" Version="11.0.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <EditorConfigFiles Remove="D:\source\repos\umbra\Umbra\.editorconfig" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Include="D:\source\repos\umbra\Umbra\.editorconfig" />
+      <PackageReference Include="System.Reflection.MetadataLoadContext" Version="9.0.4" />
     </ItemGroup>
 </Project>

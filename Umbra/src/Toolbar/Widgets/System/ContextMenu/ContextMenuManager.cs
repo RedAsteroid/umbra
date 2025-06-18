@@ -34,14 +34,10 @@ internal sealed class ContextMenuManager(UmbraDelvClipRects clipRects) : IDispos
     {
         if (null != _contextMenu) {
             _contextMenu.OnEntryInvoked -= OnEntryInvoked;
-            _contextMenu.Dispose();
             _closeCallback?.Invoke();
         }
 
         menu.OnEntryInvoked += OnEntryInvoked;
-
-        // Render once (off-screen) to calculate the bounds of the context menu.
-        menu.Node.Render(ImGui.GetBackgroundDrawList(), new(4096, 2048), true);
 
         _contextMenu   = menu;
         _closeCallback = closeCallback;
@@ -76,8 +72,9 @@ internal sealed class ContextMenuManager(UmbraDelvClipRects clipRects) : IDispos
         ImGui.PushStyleColor(ImGuiCol.PopupBg, 0);
 
         if (ImGui.BeginPopup(_contextMenu.Id, ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings)) {
-            Vector2 cursorPos = ImGui.GetCursorScreenPos();
-            Point position    = new((int)cursorPos.X + 16, (int)cursorPos.Y + 16);
+            // Vector2 cursorPos = ImGui.GetCursorScreenPos();
+            // Vector2 position    = new(cursorPos.X + 16, cursorPos.Y + 16);
+            Vector2 position = new(16, 16);
 
             _contextMenu.Node.Render(ImGui.GetWindowDrawList(), position);
 

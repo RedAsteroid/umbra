@@ -1,19 +1,3 @@
-/* Umbra | (c) 2024 by Una              ____ ___        ___.
- * Licensed under the terms of AGPL-3  |    |   \ _____ \_ |__ _______ _____
- *                                     |    |   //     \ | __ \\_  __ \\__  \
- * https://github.com/una-xiv/umbra    |    |  /|  Y Y  \| \_\ \|  | \/ / __ \_
- *                                     |______//__|_|  /____  /|__|   (____  /
- *     Umbra is free software: you can redistribute  \/     \/             \/
- *     it and/or modify it under the terms of the GNU Affero General Public
- *     License as published by the Free Software Foundation, either version 3
- *     of the License, or (at your option) any later version.
- *
- *     Umbra UI is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU Affero General Public License for more details.
- */
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -73,6 +57,8 @@ internal sealed partial class EurekaCoffersMarkerFactory : WorldMarkerFactory
     private List<Vector3> _detectedCofferPositions = [];
     private bool          _hasPlacedMapMarkers;
 
+    private bool _isListeningForNotifications;
+
     public EurekaCoffersMarkerFactory(
         IZoneManager zoneManager,
         IChatGui     chatGui,
@@ -102,6 +88,7 @@ internal sealed partial class EurekaCoffersMarkerFactory : WorldMarkerFactory
             || !_zoneManager.HasCurrentZone
             || !CofferPositions.ContainsKey(_zoneManager.CurrentZone.TerritoryId)) {
             _lastBunnyFateSpawnTime = 0;
+            _isListeningForNotifications              = false;
             RemoveAllMarkers();
             return;
         }
@@ -110,6 +97,7 @@ internal sealed partial class EurekaCoffersMarkerFactory : WorldMarkerFactory
 
         // If the player doesn't have the Lucky Carrot, but is in Eureka, show the bunny fate spawn marker.
         if (false == _player.HasItemInInventory(LuckyCarrotItemId)) {
+            _isListeningForNotifications = false;
             _detectedCofferPositions.Clear();
             RemoveAllMarkers();
             GetBunnyFateSpawnMarker();
@@ -117,6 +105,8 @@ internal sealed partial class EurekaCoffersMarkerFactory : WorldMarkerFactory
             return;
         }
 
+        _isListeningForNotifications = true;
+        
         List<string> activeIds = [];
 
         var showDirection   = GetConfigValue<bool>("ShowOnCompass");
@@ -204,8 +194,7 @@ internal sealed partial class EurekaCoffersMarkerFactory : WorldMarkerFactory
             return;
         }
 
-        if (Framework.DalamudPlugin.InstalledPlugins.Any(
-                plugin => plugin is {
+        if (Framework.DalamudPlugin.InstalledPlugins.Any(plugin => plugin is {
                     InternalName: "eurekaTrackerAutoPopper",
                     IsLoaded    : true
                 }

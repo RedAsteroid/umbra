@@ -1,19 +1,3 @@
-/* Umbra.Game | (c) 2024 by Una         ____ ___        ___.
- * Licensed under the terms of AGPL-3  |    |   \ _____ \_ |__ _______ _____
- *                                     |    |   //     \ | __ \\_  __ \\__  \
- * https://github.com/una-xiv/umbra    |    |  /|  Y Y  \| \_\ \|  | \/ / __ \_
- *                                     |______//__|_|  /____  /|__|   (____  /
- *     Umbra.Game is free software: you can          \/     \/             \/
- *     redistribute it and/or modify it under the terms of the GNU Affero
- *     General Public License as published by the Free Software Foundation,
- *     either version 3 of the License, or (at your option) any later version.
- *
- *     Umbra.Game is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU Affero General Public License for more details.
- */
-
 using Dalamud.Memory;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
@@ -111,9 +95,10 @@ internal sealed class ZoneMarkerFactory(IDataManager dataManager)
             ZoneMarkerType.QuestObjective,
             [
                 71003, 71004, 71005, 71006, 71023, 71024, 71025, 71026, 71043, 71044, 71045, 71046, 71063, 71064, 71065,
-                71066, 71083, 71084, 71085, 71086, 71123, 71124, 71125, 71126, 71143, 71144, 71145, 71203, 71223, 71225,
-                71243, 71244, 71245, 71263, 71264, 71265, 71283, 71284, 71285, 71286, 71312, 71313, 71323, 71324, 71325,
-                71343, 71344, 71345, 71346, 70997, 70998, 70999, 71006, 71026, 71046, 71066, 71086, 71113, 71326, 71346
+                71066, 71083, 71084, 71085, 71086, 71113, 71123, 71124, 71125, 71126, 71143, 71144, 71145, 71146, 71203,
+                71223, 71225, 71243, 71244, 71245, 71263, 71264, 71265, 71283, 71284, 71285, 71286, 71312, 71313, 71323,
+                71324, 71325, 71343, 71344, 71345, 71346, 70997, 70998, 70999, 71006, 71026, 71046, 71066, 71086, 71113,
+                71326, 71346
             ]
         }, {
             ZoneMarkerType.Quest,
@@ -166,7 +151,7 @@ internal sealed class ZoneMarkerFactory(IDataManager dataManager)
         int x = marker.MapMarker.X;
         int y = marker.MapMarker.Y;
 
-        Vector3 worldPosition = new(x / 16, 0, y / 16);
+        Vector3 worldPosition = new(x / 16f, 0, y / 16f);
         Vector2 mapPosition   = MapUtil.WorldToMap(new(worldPosition.X, worldPosition.Z), map);
 
         return new(
@@ -181,7 +166,7 @@ internal sealed class ZoneMarkerFactory(IDataManager dataManager)
 
     public unsafe ZoneMarker FromMapMarkerData(Sheet.Map map, MapMarkerData data)
     {
-        var position = MapUtil.WorldToMap(new(data.X, data.Z), map);
+        var position = MapUtil.WorldToMap(new(data.Position.X, data.Position.Z), map);
         var name     = SanitizeMarkerName(MemoryHelper.ReadSeString(data.TooltipString).ToString());
         var type     = DetermineMarkerType(data.IconId, name);
 
@@ -189,7 +174,7 @@ internal sealed class ZoneMarkerFactory(IDataManager dataManager)
             type,
             name,
             position,
-            new(data.X, data.Y + 2f, data.Z),
+            data.Position with { Y = data.Position.Y + 2f },
             type is ZoneMarkerType.Area or ZoneMarkerType.ObjectiveArea ? 0u : data.IconId,
             data.ObjectiveId,
             data.Radius

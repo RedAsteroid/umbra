@@ -1,18 +1,4 @@
-﻿/* Umbra | (c) 2024 by Una              ____ ___        ___.
- * Licensed under the terms of AGPL-3  |    |   \ _____ \_ |__ _______ _____
- *                                     |    |   //     \ | __ \\_  __ \\__  \
- * https://github.com/una-xiv/umbra    |    |  /|  Y Y  \| \_\ \|  | \/ / __ \_
- *                                     |______//__|_|  /____  /|__|   (____  /
- *     Umbra is free software: you can redistribute  \/     \/             \/
- *     it and/or modify it under the terms of the GNU Affero General Public
- *     License as published by the Free Software Foundation, either version 3
- *     of the License, or (at your option) any later version.
- *
- *     Umbra UI is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU Affero General Public License for more details.
- */
+﻿using Umbra.Game.Script;
 
 namespace Umbra.Widgets;
 
@@ -21,17 +7,50 @@ public class StringWidgetConfigVariable(
     string  name,
     string? description,
     string  defaultValue,
-    short   maxLength = 255
+    short   maxLength         = 255,
+    bool    supportsScripting = false
 )
     : WidgetConfigVariable<string>(id, name, description, defaultValue)
 {
     public short MaxLength { get; set; } = maxLength;
+    
+    public bool SupportsScripting { get; set; } = supportsScripting;
 
+    private UmbraScript? _script;
+    private string?      _scriptValue;
+    
     /// <inheritdoc/>
     protected override string Sanitize(object? value)
     {
         if (value is not string str) return string.Empty;
 
         return MaxLength > 0 && str.Length > MaxLength ? str[..MaxLength] : str;
+    }
+    
+    public string EvaluatedValue
+    {
+        get
+        {
+            if (!SupportsScripting) return Value;
+            
+            if (_script is null || _scriptValue != Value) {
+                try {
+                    _script?.Dispose();
+                    _script      = UmbraScript.Parse(Value);
+                    _scriptValue = Value;
+                } catch {
+                    return Value;
+                }
+            }
+            
+            return _script.Value;
+        }
+    }
+
+    public override void Dispose()
+    {
+        _script?.Dispose();
+        
+        base.Dispose();
     }
 }

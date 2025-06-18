@@ -1,9 +1,10 @@
-﻿using Dalamud.Game.Text;
+﻿using Dalamud.Interface;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Umbra.Common;
 using Umbra.Game;
+using Umbra.Windows;
+using Umbra.Windows.Settings;
 using Una.Drawing;
 
 namespace Umbra.Widgets.Library.UnifiedMainMenu;
@@ -12,285 +13,96 @@ internal sealed partial class UnifiedMainMenuPopup : WidgetPopup
 {
     public event Action<List<string>>? OnPinnedItemsChanged;
 
-    public int          MenuHeight          { get; set; }
-    public int          CategoriesWidth     { get; set; }         = 200;
-    public int          EntriesWidth        { get; set; }         = 350;
-    public uint         AvatarIconId        { get; set; }         = 76985;
-    public string       BannerLocation      { get; set; }         = "Auto";
-    public string       BannerNameStyle     { get; set; }         = "FirstName";
-    public string       BannerColorStyle    { get; set; }         = "AccentColor";
-    public bool         DesaturateIcons     { get; set; }         = false;
-    public bool         OpenSubMenusOnHover { get; set; }         = false;
-    public List<string> PinnedItems         { get; private set; } = [];
+    public uint   AvatarIconId         { get; set; } = 76985;
+    public string BannerLocation       { get; set; } = "Auto";
+    public string BannerNameStyle      { get; set; } = "FirstName";
+    public string BannerColorStyle     { get; set; } = "AccentColor";
+    public bool   DesaturateIcons      { get; set; } = false;
+    public bool   OpenSubMenusOnHover  { get; set; } = false;
+    public int    VerticalItemSpacing  { get; set; } = 0;
+    public int    MenuHeight           { get; set; } = 400;
+    public bool   ReverseCategoryOrder { get; set; } = false;
+    public int    PopupFontSize        { get; set; } = 11;
+
+    public List<string> PinnedItems { get; private set; } = [];
+
+    protected override Node Node { get; }
 
     private IMainMenuRepository MainMenuRepository { get; } = Framework.Service<IMainMenuRepository>();
     private IPlayer             Player             { get; } = Framework.Service<IPlayer>();
 
-    private MainMenuItem? SelectedMenuItem { get; set; }
+    private UdtDocument Document { get; } = UmbraDrawing.DocumentFrom("umbra.widgets.popup_unified_main_menu.xml");
+
+    private bool IsTopAligned => BannerLocation switch {
+        "Top"    => true,
+        "Bottom" => false,
+        _        => !Toolbar.IsTopAligned
+    };
 
     public UnifiedMainMenuPopup()
     {
-        foreach (var category in MainMenuRepository.GetCategories()) {
-            Node node = CreateCategory($"Category_{category.Category}", category.GetIconId(), category.Name);
-
-            node.OnMouseUp += _ => ActivateCategory(category);
-
-            node.OnMouseEnter += _ => {
-                if (OpenSubMenusOnHover) ActivateCategory(category);
-            };
-
-            CategoryListNode.AppendChild(node);
-            EntriesNode.AppendChild(CreateEntriesForCategory(category));
-
-            category.OnItemAdded   += OnCategoryItemAdded;
-            category.OnItemRemoved += OnCategoryItemRemoved;
-        }
-
-        ActivateCategory(MainMenuRepository.GetCategory(MenuCategory.Character));
-
-        ContextMenu = new(
-            [
-                new("MoveUp") {
-                    Label   = I18N.Translate("Widget.UnifiedMainMenu.ContextMenu.MoveUp"),
-                    OnClick = () => ContextMoveAction(-1),
-                    IconId  = 60541u,
-                },
-                new("MoveDown") {
-                    Label   = I18N.Translate("Widget.UnifiedMainMenu.ContextMenu.MoveDown"),
-                    OnClick = () => ContextMoveAction(1),
-                    IconId  = 60545u,
-                },
-                new("Pin") {
-                    Label   = I18N.Translate("Widget.UnifiedMainMenu.ContextMenu.Pin"),
-                    OnClick = ContextPinAction,
-                },
-                new("Unpin") {
-                    Label   = I18N.Translate("Widget.UnifiedMainMenu.ContextMenu.Unpin"),
-                    OnClick = ContextUnpinAction,
-                },
-            ]
-        );
-    }
-
-    public void SetPinnedItems(List<string> pinnedItems)
-    {
-        PinnedItems = pinnedItems;
-        UpdatePinnedItems();
-    }
-
-    protected override void OnDisposed()
-    {
-        foreach (var category in MainMenuRepository.GetCategories()) {
-            category.OnItemAdded   -= OnCategoryItemAdded;
-            category.OnItemRemoved -= OnCategoryItemRemoved;
-        }
-
-        base.OnDisposed();
+        Node = Document.RootNode!;
     }
 
     protected override void OnOpen()
     {
-        JobInfo job = Player.GetJobInfo(Player.JobId);
+        CreateSidePanelNodes();
+        CreateContentNodes();
+        CreateContextMenu();
+        UpdatePinnedItems();
+        
+        Node.QuerySelector("#side-panel")!.Style.Gap = 2 + VerticalItemSpacing;
+        PinnedListNode.Style.Gap                     = 2 + VerticalItemSpacing;
 
-        HeaderLabelNameNode.NodeValue = GetPlayerName();
-        HeaderLabelInfoNode.NodeValue = $"{I18N.Translate("Widget.GearsetSwitcher.JobLevel", job.Level)} {job.Name}";
+        foreach (var node in Node.QuerySelectorAll(".category")) {
+            node.Style.Gap = 2 + VerticalItemSpacing;
+        }
 
-        UpdateBannerColor();
-        ResizeNodes();
+        Node.QuerySelector("#btn-shutdown")!.OnMouseUp += _ => {
+            ContextMenu?.SetEntryVisible("MoveUp", false);
+            ContextMenu?.SetEntryVisible("MoveDown", false);
+            ContextMenu?.SetEntryVisible("Pin", false);
+            ContextMenu?.SetEntryVisible("Unpin", false);
+            ContextMenu?.SetEntryVisible("Logout", true);
+            ContextMenu?.SetEntryVisible("Shutdown", true);
+            ContextMenu?.Present();
+        };
 
-        HeaderIconNode.Style.IconId    = AvatarIconId;
-        HeaderIconNode.Style.IsVisible = AvatarIconId != 0;
+        Node.QuerySelector("#btn-settings")!.OnMouseUp += _ => {
+            Framework.Service<WindowManager>().Present("UmbraSettings", new SettingsWindow());
+            Close();
+        };
+        
+        ActivateCategory("Category_Character");
+    }
+
+    protected override void OnClose()
+    {
+        ContextMenu?.Dispose();
+    }
+
+    public void SetPinnedItems(List<string> items)
+    {
+        PinnedItems = items;
     }
 
     protected override void OnUpdate()
     {
-        if (!IsOpen) return;
+        UpdateHeaderNodes();
 
-        ResizeNodes();
-
-        foreach (var category in MainMenuRepository.GetCategories()) {
-            foreach (var entry in category.Items) {
-                if (entry.Type == MainMenuItemType.Separator) continue;
-                Node? node1 = EntriesNode.QuerySelector($"#{entry.Id}");
-                Node? node2 = PinnedListNode.QuerySelector($"#Pin_{entry.Id}");
-
-                if (node1 == null) {
-                    if (PinnedItems.Contains(entry.Id)) {
-                        PinnedItems.Remove(entry.Id);
-                        UpdatePinnedItems();
-                    }
-
-                    continue;
-                }
-
-                if (node2 != null) {
-                    node2.IsDisabled                                                 = entry.IsDisabled;
-                    node2.QuerySelector(".pinned-entry--icon")!.Style.ImageGrayscale = DesaturateIcons;
-                }
-
-                node1.IsDisabled                                          = entry.IsDisabled;
-                node1.QuerySelector(".entry--info")!.NodeValue            = entry.ShortKey;
-                node1.QuerySelector(".entry--icon")!.Style.ImageGrayscale = DesaturateIcons;
-            }
-        }
-
-        foreach (Node node in Node.QuerySelectorAll(".category--icon")) {
-            node.Style.ImageGrayscale = DesaturateIcons;
+        foreach (var node in Node.QuerySelectorAll(".text, .alt")) {
+            node.Style.FontSize = PopupFontSize;
         }
     }
 
-    private void ActivateCategory(MainMenuCategory category)
+    private void ActivateCategory(string id)
     {
-        foreach (Node node in CategoryListNode.ChildNodes) {
-            node.TagsList.Remove("selected");
+        foreach (var node in SidePanelNode.QuerySelectorAll(".category-button")) {
+            node.ToggleClass("selected", node.Id == $"{id}_Button");
         }
 
-        foreach (Node node in EntriesNode.ChildNodes) {
-            node.Style.IsVisible = false;
+        foreach (var node in ContentsNode.QuerySelectorAll(".category")) {
+            node.Style.IsVisible = node.Id == id;
         }
-
-        CategoryListNode.ChildNodes.First(n => n.Id == $"Category_{category.Category}").TagsList.Add("selected");
-        EntriesNode.QuerySelector($"Category_{category.Category}")!.Style.IsVisible = true;
-        ResizeNodes();
-    }
-
-    private void OnCategoryItemAdded(MainMenuItem entry)
-    {
-        Node target = EntriesNode.QuerySelector($"Category_{entry.Category!.Category}")!;
-        Node node   = CreateMainMenuEntry(entry);
-
-        if (entry.Type == MainMenuItemType.Separator) {
-            target.AppendChild(node);
-            return;
-        }
-
-        entry.OnUpdate += () => {
-            uint?   iconId  = entry.Icon is uint icon ? icon : null;
-            string? iconStr = entry.Icon is SeIconChar iconChar ? iconChar.ToIconString() : null;
-
-            Node iconNode = node.QuerySelector(".entry--icon")!;
-            Node nameNode = node.QuerySelector(".entry--name")!;
-            Node infoNode = node.QuerySelector(".entry--info")!;
-
-            node.IsDisabled       = entry.IsDisabled;
-            iconNode.Style.IconId = iconId;
-            iconNode.Style.Color  = entry.IconColor != null ? new(entry.IconColor.Value) : null;
-            iconNode.NodeValue    = iconStr;
-            nameNode.NodeValue    = entry.Name;
-            infoNode.NodeValue    = entry.ShortKey;
-        };
-
-        target.AppendChild(node);
-    }
-
-    private void OnCategoryItemRemoved(MainMenuItem item)
-    {
-        Node target = EntriesNode.QuerySelector($"Category_{item.Category!.Category}")!;
-        Node node   = target.ChildNodes.First(n => n.Id == item.Id);
-
-        target.RemoveChild(node);
-    }
-
-    private void ContextPinAction()
-    {
-        if (null == SelectedMenuItem) return;
-
-        PinnedItems.Add(SelectedMenuItem.Id);
-        UpdatePinnedItems();
-
-        OnPinnedItemsChanged?.Invoke(PinnedItems);
-    }
-
-    private void ContextUnpinAction()
-    {
-        if (null == SelectedMenuItem) return;
-
-        PinnedItems.Remove(SelectedMenuItem.Id);
-
-        Node? node = PinnedListNode.QuerySelector($"#Pin_{SelectedMenuItem.Id}");
-        if (null != node) PinnedListNode.RemoveChild(node);
-
-        UpdatePinnedItems();
-
-        OnPinnedItemsChanged?.Invoke(PinnedItems);
-    }
-
-    private void ContextMoveAction(int direction)
-    {
-        if (null == SelectedMenuItem) return;
-
-        int index = PinnedItems.IndexOf(SelectedMenuItem.Id);
-
-        if (index == -1) return;
-
-        PinnedItems.RemoveAt(index);
-        PinnedItems.Insert(index + direction, SelectedMenuItem.Id);
-
-        UpdatePinnedItems();
-
-        OnPinnedItemsChanged?.Invoke(PinnedItems);
-    }
-
-    private void UpdatePinnedItems()
-    {
-        var sortIndex = 0;
-
-        foreach (var id in PinnedItems.ToArray()) {
-            sortIndex++;
-
-            Node? node = PinnedListNode.QuerySelector($"#Pin_{id}");
-
-            if (node == null) {
-                node = CreatePinnedItem(id, sortIndex);
-
-                if (null == node) {
-                    Logger.Warning($"Detected an invalid menu item id in pinned items: {id}");
-                    PinnedItems.Remove(id);
-                    continue;
-                }
-
-                PinnedListNode.AppendChild(node);
-                continue;
-            }
-
-            node.SortIndex = sortIndex;
-        }
-    }
-
-    private string GetPlayerName()
-    {
-        string[] name = Player.Name.Split(' ');
-
-        return BannerNameStyle switch {
-            "FirstName" => $"{name[0]}",
-            "LastName"  => $"{name[1]}",
-            "FullName"  => $"{name[0]} {name[1]}",
-            "Initials"  => $"{name[0][0]}. {name[1][0]}.",
-            _           => Player.Name
-        };
-    }
-
-    private void UpdateBannerColor()
-    {
-        Color? color = new(0);
-
-        switch (BannerColorStyle) {
-            case "AccentColor":
-                color = new("Window.AccentColor");
-                break;
-            case "RoleColor":
-                color = new(Player.GetJobInfo(Player.JobId).ColorName);
-                break;
-            case "None":
-                color = new(0);
-                break;
-        }
-
-        bool isTop = HeaderNode.TagsList.Contains("top");
-
-        HeaderNode.Style.BackgroundGradient = GradientColor.Vertical(
-            isTop ? null : color,
-            isTop ? color : null
-        );
     }
 }

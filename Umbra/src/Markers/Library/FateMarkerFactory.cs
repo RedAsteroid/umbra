@@ -1,20 +1,4 @@
-﻿/* Umbra | (c) 2024 by Una              ____ ___        ___.
- * Licensed under the terms of AGPL-3  |    |   \ _____ \_ |__ _______ _____
- *                                     |    |   //     \ | __ \\_  __ \\__  \
- * https://github.com/una-xiv/umbra    |    |  /|  Y Y  \| \_\ \|  | \/ / __ \_
- *                                     |______//__|_|  /____  /|__|   (____  /
- *     Umbra is free software: you can redistribute  \/     \/             \/
- *     it and/or modify it under the terms of the GNU Affero General Public
- *     License as published by the Free Software Foundation, either version 3
- *     of the License, or (at your option) any later version.
- *
- *     Umbra UI is distributed in the hope that it will be useful,
- *     but WITHOUT ANY WARRANTY; without even the implied warranty of
- *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU Affero General Public License for more details.
- */
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
 using Dalamud.Game.Text;
@@ -22,7 +6,6 @@ using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 using Umbra.Common;
 using Umbra.Game;
-using FateState = Dalamud.Game.ClientState.Fates.FateState;
 
 namespace Umbra.Markers.Library;
 
@@ -76,7 +59,7 @@ internal class FateMarkerFactory(IZoneManager zoneManager) : WorldMarkerFactory
 
             var id       = $"FATE_{fate->FateId}";
             var progress = "";
-            var state    = (FateState)fate->State;
+            var state    = fate->State;
 
             if (fate->Progress > 0) {
                 progress = $" - {fate->Progress}%";
