@@ -59,7 +59,7 @@ internal sealed class UmbraBindings : IDisposable
         _commandManager.AddHandler(
             "/umbra-aux",
             new(HandleUmbraCommand) {
-                HelpMessage = "Shows or hides an auxiliary toolbar. Usage: /umbra-aux <show|hide|toggle> [name].",
+                HelpMessage = "显示或隐藏一个辅助栏\n            用法: /umbra-aux <show|hide|toggle> [名称]",
                 ShowInHelp  = true,
             }
         );
