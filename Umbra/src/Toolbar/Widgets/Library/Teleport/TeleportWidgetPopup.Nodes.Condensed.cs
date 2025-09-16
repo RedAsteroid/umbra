@@ -1,8 +1,4 @@
 ﻿using Dalamud.Game.Text;
-using System.Linq;
-using Umbra.Common;
-using Umbra.Game;
-using Una.Drawing;
 
 namespace Umbra.Widgets;
 
@@ -19,14 +15,14 @@ internal partial class TeleportWidgetPopup
         CondensedInterfaceNode.Clear();
         CondensedInterfaceNode.AppendChild(new() { ClassList = ["side-panel", Toolbar.IsTopAligned ? "top" : "bottom"] });
         CondensedSidePanelNode.AppendChild(new() { ClassList = ["side-panel-spacer"], SortIndex = int.MinValue });
-
+        
         Node contentsWrapper = new() {
-            ClassList  = ["contents"],
+            ClassList  = ["contents", "scrollbars"],
             ChildNodes = [new() { ClassList = ["list"] }],
         };
 
         contentsWrapper.Overflow   = false;
-        contentsWrapper.Style.Size = new(0, PopupHeight);
+        contentsWrapper.Style.Size = new(FixedPopupWidth && CustomPopupWidth >= 250 ? CustomPopupWidth : 0, PopupHeight);
 
         CondensedInterfaceNode.AppendChild(contentsWrapper);
 
@@ -88,7 +84,7 @@ internal partial class TeleportWidgetPopup
 
             foreach (var map in region.Maps.Values) {
                 foreach (var destination in map.Destinations.Values) {
-                    
+
                     Node destinationNode = Document.CreateNodeFromTemplate("condensed-teleport", new() {
                         { "label", GetDestinationName(map, destination) },
                         { "cost", $"{SeIconChar.Gil.ToIconChar()} {I18N.FormatNumber(destination.GilCost)}" }
@@ -161,7 +157,7 @@ internal partial class TeleportWidgetPopup
                     }
 
                     menuItemNode.SortIndex =  item.SortIndex;
-                    menuItemNode.OnClick   += _ => item.Invoke();
+                    menuItemNode.OnClick   += _ => { item.Invoke(); Close(); };
 
                     regionNode.QuerySelector(".list")!.AppendChild(menuItemNode);
                     break;
@@ -270,7 +266,7 @@ internal partial class TeleportWidgetPopup
 
     private string GetDestinationName(TeleportMap region, TeleportDestination destination)
     {
-        return ShowMapNames && destination.Name != region.Name 
+        return ShowMapNames && destination.Name != region.Name
             ? $"{region.Name} - {destination.Name}"
             : destination.Name;
     }

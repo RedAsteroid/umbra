@@ -1,14 +1,9 @@
-﻿using Dalamud.Plugin.Services;
-using Lumina.Excel.Sheets;
-using System;
-using System.Collections.Generic;
+﻿using Lumina.Excel.Sheets;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
-using Umbra.Common;
 
 namespace Umbra.Widgets.System;
 
@@ -102,7 +97,7 @@ internal partial class WidgetManager
         }
 
         // Migrate the default configuration over to the profile data if needed.
-        if (ActiveProfile == "Default" && string.IsNullOrEmpty(_widgetProfiles[ActiveProfile])) {
+        if (ActiveProfile == "Default" && (!_widgetProfiles.ContainsKey(ActiveProfile) || string.IsNullOrEmpty(_widgetProfiles[ActiveProfile]))) {
             _widgetProfiles[ActiveProfile] = WidgetConfigData;
             SaveProfileData();
         }

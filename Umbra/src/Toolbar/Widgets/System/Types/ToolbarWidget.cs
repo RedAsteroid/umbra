@@ -1,12 +1,6 @@
-﻿using ImGuiNET;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Newtonsoft.Json;
 using System.Text;
-using Umbra.Common;
 using Umbra.Widgets.System;
-using Una.Drawing;
 
 namespace Umbra.Widgets;
 
@@ -66,7 +60,7 @@ public abstract class ToolbarWidget(
     protected static int SafeHeight => Toolbar.Height - 4;
 
     protected bool IsVisible { get; set; } = true;
-    
+
     private readonly Dictionary<string, IWidgetConfigVariable> _configVariables = new();
     private readonly Dictionary<string, object>                _configValues    = configValues ?? [];
 
@@ -74,51 +68,12 @@ public abstract class ToolbarWidget(
 
     public void Setup()
     {
-        foreach (var cfg in GetConfigVariablesInternal()) {
-            _configVariables[cfg.Id] = cfg;
-
-            if (cfg is IUntypedWidgetConfigVariable u) {
-                if (false == _configValues.ContainsKey(cfg.Id)) {
-                    _configValues[cfg.Id] = u.GetDefaultValue()!;
-                }
-
-                u.UntypedValueChanged += value => _configValues[cfg.Id] = value;
-            }
-        }
-
-        if (_configValues.Count > 0) {
-            List<string> keysToRemove = [];
-
-            foreach ((string key, object value) in _configValues) {
-                if (!_configVariables.TryGetValue(key, out IWidgetConfigVariable? cfg)) {
-                    keysToRemove.Add(key);
-                    continue;
-                }
-
-                if (cfg is IUntypedWidgetConfigVariable u) {
-                    if (cfg is IEnumWidgetConfigVariable e) {
-                        try {
-                            Type enumType = e.GetType().GenericTypeArguments[0];
-                            u.SetValue(Enum.ToObject(enumType, value));
-                        } catch {
-                            keysToRemove.Add(key); // Faulty config.
-                            Logger.Warning($"Failed to set config value '{key}' to '{value}' in widget '{Info.Name}'.");
-                        }
-                    } else {
-                        u.SetValue(value);
-                    }
-                }
-            }
-
-            foreach (string key in keysToRemove) {
-                _configValues.Remove(key);
-            }
-        }
-
+        UpdateConfigVariables();
+        OnConfigurationChanged();
         Initialize();
 
         Node.ToggleClass("widget-instance", true);
-        
+
         if (Popup is null) return;
 
         Node.OnMouseDown += _ => {
@@ -140,8 +95,6 @@ public abstract class ToolbarWidget(
             if (Node.IsDisabled || PopupActivationMethod != "Hover") return;
             OpenPopup?.Invoke(this, Popup);
         };
-        
-        OnConfigurationChanged();
     }
 
     /// <summary>
@@ -165,6 +118,16 @@ public abstract class ToolbarWidget(
             "Right"  => Anchor.MiddleRight,
             _        => Anchor.MiddleCenter,
         };
+
+        var barNode = GetBarNode;
+
+        if (barNode != null) {
+            if (barNode.ClassList.Contains("align-content-left")) {
+                Node.Style.Anchor = Anchor.MiddleLeft;
+            } else if (barNode.ClassList.Contains("align-content-right")) {
+                Node.Style.Anchor = Anchor.MiddleRight;
+            }
+        }
 
         if (!IsEnabled) return;
 
@@ -251,7 +214,7 @@ public abstract class ToolbarWidget(
     /// Invoked on every frame, just before the widget is rendered.
     /// </summary>
     protected abstract void OnUpdate();
-    
+
     /// <summary>
     /// Returns a list of configuration variables for this widget that the user
     /// can modify.
@@ -343,6 +306,52 @@ public abstract class ToolbarWidget(
 
         Framework.Service<WidgetManager>().SaveWidgetState(Id);
         Framework.Service<WidgetManager>().SaveState();
+
+        OnConfigurationChanged();
+    }
+
+    protected void UpdateConfigVariables()
+    {
+        foreach (var cfg in GetConfigVariablesInternal()) {
+            _configVariables[cfg.Id] = cfg;
+
+            if (cfg is IUntypedWidgetConfigVariable u) {
+                if (false == _configValues.ContainsKey(cfg.Id)) {
+                    _configValues[cfg.Id] = u.GetDefaultValue()!;
+                }
+
+                u.UntypedValueChanged += value => _configValues[cfg.Id] = value;
+            }
+        }
+
+        if (_configValues.Count > 0) {
+            List<string> keysToRemove = [];
+
+            foreach ((string key, object value) in _configValues) {
+                if (!_configVariables.TryGetValue(key, out IWidgetConfigVariable? cfg)) {
+                    keysToRemove.Add(key);
+                    continue;
+                }
+
+                if (cfg is IUntypedWidgetConfigVariable u) {
+                    if (cfg is IEnumWidgetConfigVariable e) {
+                        try {
+                            Type enumType = e.GetType().GenericTypeArguments[0];
+                            u.SetValue(Enum.ToObject(enumType, value));
+                        } catch {
+                            keysToRemove.Add(key); // Faulty config.
+                            Logger.Warning($"Failed to set config value '{key}' to '{value}' in widget '{Info.Name}'.");
+                        }
+                    } else {
+                        u.SetValue(value);
+                    }
+                }
+            }
+
+            foreach (string key in keysToRemove) {
+                _configValues.Remove(key);
+            }
+        }
     }
 
     /// <summary>
@@ -359,8 +368,12 @@ public abstract class ToolbarWidget(
 
         return result;
     }
-    
-    protected bool IsMemberOfVerticalBar => Node.ParentNode?.ParentNode?.ClassList.Contains("vertical") ?? false;
+
+    protected Node? GetBarNode             => Node.ParentNode?.ParentNode;
+    protected bool  IsMemberOfVerticalBar  => GetBarNode?.ClassList.Contains("vertical") ?? false;
+    protected bool  IsContentLeftAligned   => GetBarNode?.ClassList.Contains("align-content-left") ?? false;
+    protected bool  IsContentCenterAligned => GetBarNode?.ClassList.Contains("align-content-center") ?? false;
+    protected bool  IsContentRightAligned  => GetBarNode?.ClassList.Contains("align-content-right") ?? false;
 
     /// <summary>
     /// Opens the settings window for this widget instance.

@@ -1,6 +1,4 @@
-﻿using ImGuiNET;
-using System.Collections.Generic;
-using Umbra.Common;
+﻿
 using Umbra.Game.CustomDeliveries;
 
 namespace Umbra.Widgets.Library.CustomDeliveries;
@@ -92,6 +90,7 @@ internal sealed class CustomDeliveriesWidget(
 
         Popup.TrackedNpcId  = npcId;
         Popup.PrimaryAction = GetConfigValue<string>("PrimaryAction");
+        Popup.ReverseOrder  = GetConfigValue<bool>("ReverseOrder");
 
         if (npcId == 0 || npc == null) {
             SetText(GetConfigValue<string>("ButtonLabel"));

@@ -1,11 +1,5 @@
 ﻿using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Interface;
-using System;
-using System.Collections.Generic;
-using Umbra.Common;
-using Umbra.Windows.Components;
-using Una.Drawing;
 
 namespace Umbra.Widgets;
 
@@ -54,7 +48,44 @@ public abstract class StandardToolbarWidget(
         _isUpdating = true;
 
         Node.ToggleClass("decorated", GetConfigValue<bool>(CvarNameDecorate));
-        Node.Style.Size = new(0, SafeHeight);
+
+        bool isVertical = IsMemberOfVerticalBar;
+        Node? barNode    = GetBarNode;
+
+        switch (CvarSizingMode()) {
+            case SizingModeGrow:
+                Node.Style.Size = new(0, SafeHeight);
+                if (!isVertical) {
+                    Node.Style.AutoSize = (AutoSize.Grow, AutoSize.Grow);
+                }
+                break;
+            case SizingModeFixed:
+                if (!isVertical) {
+                    Node.Style.Size     = new(CvarWidth(), SafeHeight);
+                    Node.Style.AutoSize = (AutoSize.Fit, AutoSize.Grow);
+                } else {
+                    Node.Style.Size = new(0, SafeHeight);
+                }
+
+                break;
+            default: // Default is Fit
+                Node.Style.Size = new(0, SafeHeight);
+                if (!isVertical) {
+                    Node.Style.AutoSize = (AutoSize.Fit, AutoSize.Grow);
+                }
+
+                break;
+        }
+
+        if (barNode != null) {
+            if (barNode.ClassList.Contains("align-content-left")) {
+                BodyNode.Style.Anchor = Anchor.MiddleLeft;
+            } else if (barNode.ClassList.Contains("align-content-right")) {
+                BodyNode.Style.Anchor = Anchor.MiddleRight;
+            } else {
+                BodyNode.Style.Anchor = Anchor.MiddleCenter;
+            }
+        }
 
         if (HasIconAndText()) {
             Node.ToggleClass("reverse", GetConfigValue<string>(CvarNameIconLocation) == "Right");
@@ -117,8 +148,6 @@ public abstract class StandardToolbarWidget(
                 }
             }
 
-            IconNode.Style.IsVisible = HasIcon();
-
             SetIconColor(new(GetConfigValue<uint>(CvarNameIconColor)));
             SetIconDesaturated(GetConfigValue<bool>(CvarNameDesaturateIcon));
             SetIconSize(GetConfigValue<int>(CvarNameIconSize));
@@ -152,8 +181,8 @@ public abstract class StandardToolbarWidget(
 
         if (HasIconAndTextFeature()) {
             string displayMode = GetConfigValue<string>(CvarNameDisplayMode);
-            Node.ToggleClass("text-only", displayMode == "TextOnly");
-            Node.ToggleClass("icon-only", displayMode == "IconOnly");
+            Node.ToggleClass("text-only", displayMode == DisplayModeTextOnly);
+            Node.ToggleClass("icon-only", displayMode == DisplayModeIconOnly);
         }
 
         int padding = GetConfigValue<int>(CvarNameHorizontalPadding);
@@ -232,14 +261,24 @@ public abstract class StandardToolbarWidget(
         MultiLabelTextBottomNode.Style.OutlineColor = outlineColor;
     }
 
+    protected void SetTooltip(string? text)
+    {
+        Node.Tooltip = text;
+    }
+
     protected void SetGameIconId(uint iconId)
     {
+        IconNode.NodeValue            = null;
         IconNode.Style.IconId         = iconId;
-        IconNode.NodeValue            = "";
         IconNode.Style.BitmapFontIcon = null;
+        IconNode.Style.UldPartId      = null;
+        IconNode.Style.UldPartsId     = null;
+        IconNode.Style.UldResource    = null;
+
         IconNode.ToggleClass("fa-icon", false);
         IconNode.ToggleClass("glyph-icon", false);
         IconNode.ToggleClass("game-icon", true);
+        IconNode.ToggleClass("uld", false);
     }
 
     protected void SetFontAwesomeIcon(FontAwesomeIcon icon)
@@ -247,9 +286,14 @@ public abstract class StandardToolbarWidget(
         IconNode.NodeValue            = icon.ToIconString();
         IconNode.Style.IconId         = null;
         IconNode.Style.BitmapFontIcon = null;
-        IconNode.ToggleClass("game-icon", false);
-        IconNode.ToggleClass("glyph-icon", false);
+        IconNode.Style.UldPartId      = null;
+        IconNode.Style.UldPartsId     = null;
+        IconNode.Style.UldResource    = null;
+
         IconNode.ToggleClass("fa-icon", true);
+        IconNode.ToggleClass("glyph-icon", false);
+        IconNode.ToggleClass("game-icon", false);
+        IconNode.ToggleClass("uld", false);
     }
 
     protected void SetGameGlyphIcon(SeIconChar iconChar)
@@ -257,19 +301,44 @@ public abstract class StandardToolbarWidget(
         IconNode.NodeValue            = iconChar.ToIconString();
         IconNode.Style.IconId         = null;
         IconNode.Style.BitmapFontIcon = null;
-        IconNode.ToggleClass("game-icon", false);
+        IconNode.Style.UldPartId      = null;
+        IconNode.Style.UldPartsId     = null;
+        IconNode.Style.UldResource    = null;
+
         IconNode.ToggleClass("fa-icon", false);
         IconNode.ToggleClass("glyph-icon", true);
+        IconNode.ToggleClass("game-icon", false);
+        IconNode.ToggleClass("uld", false);
     }
 
     protected void SetGfdIcon(BitmapFontIcon icon)
     {
-        IconNode.Style.IconId         = null;
         IconNode.NodeValue            = "";
+        IconNode.Style.IconId         = null;
         IconNode.Style.BitmapFontIcon = icon;
+        IconNode.Style.UldPartId      = null;
+        IconNode.Style.UldPartsId     = null;
+        IconNode.Style.UldResource    = null;
+
         IconNode.ToggleClass("fa-icon", false);
         IconNode.ToggleClass("glyph-icon", false);
         IconNode.ToggleClass("game-icon", true);
+        IconNode.ToggleClass("uld", false);
+    }
+
+    protected void SetUldIcon(int uldPartId, string uldResource, int uldPartsId)
+    {
+        IconNode.NodeValue            = null;
+        IconNode.Style.IconId         = null;
+        IconNode.Style.BitmapFontIcon = null;
+        IconNode.Style.UldPartId      = uldPartId;
+        IconNode.Style.UldResource    = uldResource;
+        IconNode.Style.UldPartsId     = uldPartsId;
+
+        IconNode.ToggleClass("fa-icon", false);
+        IconNode.ToggleClass("glyph-icon", false);
+        IconNode.ToggleClass("game-icon", true);
+        IconNode.ToggleClass("uld", true);
     }
 
     protected void ClearIcon()
@@ -277,9 +346,13 @@ public abstract class StandardToolbarWidget(
         IconNode.NodeValue            = null;
         IconNode.Style.IconId         = null;
         IconNode.Style.BitmapFontIcon = null;
+        IconNode.Style.UldPartId      = null;
+        IconNode.Style.UldResource    = null;
+        IconNode.Style.UldPartsId     = null;
         IconNode.ToggleClass("fa-icon", false);
         IconNode.ToggleClass("glyph-icon", false);
         IconNode.ToggleClass("game-icon", false);
+        IconNode.ToggleClass("uld", false);
     }
 
     protected void SetIconColor(Color color)
@@ -343,6 +416,9 @@ public abstract class StandardToolbarWidget(
     protected const string DisplayModeTextAndIcon = "TextAndIcon";
     protected const string DisplayModeTextOnly    = "TextOnly";
     protected const string DisplayModeIconOnly    = "IconOnly";
+    protected const string SizingModeFit          = "Fit";
+    protected const string SizingModeGrow         = "Grow";
+    protected const string SizingModeFixed        = "Fixed";
 
     protected bool   ProgressBarVisibility            = true;
     protected Color? ProgressBarColorOverride         = null;
@@ -355,15 +431,18 @@ public abstract class StandardToolbarWidget(
     private bool IsSingleLabelFeature()  => Features.HasFlag(StandardWidgetFeatures.Text);
     private bool IsMultiLabelFeature()   => Features.HasFlag(StandardWidgetFeatures.SubText);
     private bool IsIconCustomizable()    => Features.HasFlag(StandardWidgetFeatures.CustomizableIcon);
+    private bool IsSizeCustomizable()    => Features.HasFlag(StandardWidgetFeatures.CustomizableSize);
     private bool HasTextFeature()        => IsSingleLabelFeature() || IsMultiLabelFeature();
     private bool HasBothLabelTypes()     => IsSingleLabelFeature() && IsMultiLabelFeature();
     private bool HasIconFeature()        => Features.HasFlag(StandardWidgetFeatures.Icon);
     private bool HasProgressBarFeature() => Features.HasFlag(StandardWidgetFeatures.ProgressBar);
     private bool HasIconAndTextFeature() => HasIconFeature() && (IsSingleLabelFeature() || IsMultiLabelFeature());
 
-    private bool HasIcon() => IconNode.NodeValue != null || IconNode.Style.IconId > 0 || IconNode.Style.BitmapFontIcon != null;
+    private bool HasIcon() => IconNode.NodeValue != null || IconNode.Style.IconId > 0 || IconNode.Style.BitmapFontIcon != null || HasUldIcon();
 
     private bool HasIconAndText() => HasIcon() && HasText();
+
+    private bool HasUldIcon() => IconNode.Style.UldPartId != null && IconNode.Style.UldPartsId != null && IconNode.Style.UldResource != null;
 
     private bool HasMainText() =>
         (IsSingleLabelFeature() && !string.IsNullOrWhiteSpace(SingleLabelTextNode.NodeValue?.ToString())) ||
@@ -387,6 +466,11 @@ public abstract class StandardToolbarWidget(
         }
 
         variables.Add(ConfigVariableHorizontalPadding());
+
+        variables.AddRange([
+            ConfigVariableSizingMode(),
+            ConfigVariableWidth(),
+        ]);
 
         if (HasIconFeature()) {
             if (Features.HasFlag(StandardWidgetFeatures.CustomizableIcon)) {
@@ -470,6 +554,8 @@ public abstract class StandardToolbarWidget(
     private const string CvarNameDecorate                       = "Decorate";
     private const string CvarNameDesaturateIcon                 = "DesaturateIcon";
     private const string CvarNameDisplayMode                    = "DisplayMode";
+    private const string CvarNameSizingMode                     = "SizingMode";
+    private const string CvarNameWidth                          = "Width";
     private const string CvarNameIconType                       = "IconType";
     private const string CvarNameGameIconId                     = "GameIconId";
     private const string CvarNameFontAwesomeIcon                = "FaIcon";
@@ -504,6 +590,8 @@ public abstract class StandardToolbarWidget(
     protected bool            CvarDecorate()                    => GetConfigValue<bool>(CvarNameDecorate);
     protected bool            CvarDesaturateIcon()              => GetConfigValue<bool>(CvarNameDesaturateIcon);
     protected string          CvarDisplayMode()                 => GetConfigValue<string>(CvarNameDisplayMode);
+    protected string          CvarSizingMode()                  => GetConfigValue<string>(CvarNameSizingMode);
+    protected int             CvarWidth()                       => GetConfigValue<int>(CvarNameWidth);
     protected string          CvarIconType()                    => GetConfigValue<string>(CvarNameIconType);
     protected uint            CvarGameIconId()                  => GetConfigValue<uint>(CvarNameGameIconId);
     protected FontAwesomeIcon CvarFontAwesomeIcon()             => GetConfigValue<FontAwesomeIcon>(CvarNameFontAwesomeIcon);
@@ -533,6 +621,8 @@ public abstract class StandardToolbarWidget(
     protected virtual bool            DefaultDecorate                    => true;
     protected virtual bool            DefaultDesaturateIcon              => false;
     protected virtual string          DefaultDisplayMode                 => DisplayModeTextAndIcon;
+    protected virtual string          DefaultSizingMode                  => SizingModeFit;
+    protected virtual int             DefaultWidth                       => 0;
     protected virtual string          DefaultIconType                    => IconTypeGameIcon;
     protected virtual uint            DefaultGameIconId                  => 113;
     protected virtual FontAwesomeIcon DefaultFontAwesomeIcon             => FontAwesomeIcon.Home;
@@ -551,7 +641,7 @@ public abstract class StandardToolbarWidget(
     protected virtual int             DefaultMultiLabelTextSizeTop       => 12;
     protected virtual int             DefaultMultiLabelTextSizeBottom    => 9;
     protected virtual int             DefaultMultiLabelTextYOffsetTop    => 1;
-    protected virtual int             DefaultMultiLabelTextYOffsetBottom => 1;
+    protected virtual int             DefaultMultiLabelTextYOffsetBottom => -1;
     protected virtual bool            DefaultUseCustomTextColor          => false;
     protected virtual bool            DefaultShowProgressBar             => true;
 
@@ -592,6 +682,32 @@ public abstract class StandardToolbarWidget(
             { DisplayModeIconOnly, I18N.Translate("Widgets.Standard.Config.DisplayMode.Option.IconOnly") }
         }
     ) { Category = I18N.Translate("Widgets.Standard.Config.Category.General") };
+
+    private SelectWidgetConfigVariable ConfigVariableSizingMode() => new(
+        CvarNameSizingMode,
+        I18N.Translate("Widgets.Standard.Config.SizingMode.Name"),
+        I18N.Translate("Widgets.Standard.Config.SizingMode.Description"),
+        DefaultSizingMode,
+        new() {
+            { SizingModeFit, I18N.Translate("Widgets.Standard.Config.SizingMode.Option.Fit") },
+            { SizingModeGrow, I18N.Translate("Widgets.Standard.Config.SizingMode.Option.Grow") },
+            { SizingModeFixed, I18N.Translate("Widgets.Standard.Config.SizingMode.Option.Fixed") },
+        }
+    ) {
+        Category  = I18N.Translate("Widgets.Standard.Config.Category.General"),
+        DisplayIf = IsSizeCustomizable
+    };
+
+    private IntegerWidgetConfigVariable ConfigVariableWidth() => new(
+        CvarNameWidth,
+        I18N.Translate("Widgets.Standard.Config.Width.Name"),
+        I18N.Translate("Widgets.Standard.Config.Width.Description"),
+        DefaultWidth,
+        0
+    ) {
+        Category  = I18N.Translate("Widgets.Standard.Config.Category.General"),
+        DisplayIf = () => IsSizeCustomizable() && GetConfigValue<string>(CvarNameSizingMode) == "Fixed",
+    };
 
     private BooleanWidgetConfigVariable ConfigVariableShowSubText() => new(
         CvarNameShowSubText,
@@ -850,7 +966,7 @@ public abstract class StandardToolbarWidget(
         Color.GetNamedColor("Widget.TextMuted")
     ) {
         Category = I18N.Translate("Widgets.Standard.Config.Category.Text"),
-        Group     = I18N.Translate("Widgets.Standard.Config.Group.TextColor"),
+        Group    = I18N.Translate("Widgets.Standard.Config.Group.TextColor"),
         DisplayIf = () => IsMultiLabelFeature()
                           && GetConfigValue<bool>(CvarNameUseCustomTextColor)
                           && GetConfigValue<bool>(CvarNameShowSubText),
@@ -863,7 +979,7 @@ public abstract class StandardToolbarWidget(
         Color.GetNamedColor("Widget.TextOutline")
     ) {
         Category = I18N.Translate("Widgets.Standard.Config.Category.Text"),
-        Group     = I18N.Translate("Widgets.Standard.Config.Group.TextColor"),
+        Group    = I18N.Translate("Widgets.Standard.Config.Group.TextColor"),
         DisplayIf = () => IsMultiLabelFeature()
                           && GetConfigValue<bool>(CvarNameUseCustomTextColor)
                           && GetConfigValue<bool>(CvarNameShowSubText),
@@ -967,8 +1083,16 @@ public enum StandardWidgetFeatures : byte
 
     /// <summary>
     /// Shows a progress bar as an underlay element of the widget. Using the
-    /// <see cref="SetProgress"/> method allows you to set the progress of
-    /// the bar. Setting the progress to 0 will hide the bar.
+    /// <see cref="StandardToolbarWidget.SetProgressBarValue"/> method allows
+    /// you to set the progress of the bar. Setting the progress to 0 will hide
+    /// the bar.
     /// </summary>
     ProgressBar = 16,
+
+    /// <summary>
+    /// Adds options for fine-tuning the widget sizing allowing to choose
+    /// between a fixed width, fit content or growing to fill the parent
+    /// element free space.
+    /// </summary>
+    CustomizableSize = 32,
 }

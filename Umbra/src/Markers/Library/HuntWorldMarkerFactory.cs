@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.Game.Character;
+﻿using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using Lumina.Excel.Sheets;
-using Umbra.Common;
-using Umbra.Game;
 
 namespace Umbra.Markers.Library;
 
@@ -35,6 +29,11 @@ internal class HuntWorldMarkerFactory(IDataManager dataManager, IZoneManager zon
             new BooleanMarkerConfigVariable("ShowSS", I18N.Translate("Markers.Hunt.ShowSS"), null, true),
             ..DefaultFadeConfigVariables,
         ];
+    }
+    
+    protected override void OnZoneChanged(IZone zone)
+    {
+        RemoveAllMarkers();
     }
 
     [OnTick(interval: 100)]
@@ -78,8 +77,6 @@ internal class HuntWorldMarkerFactory(IDataManager dataManager, IZoneManager zon
             var id = $"NM_{bc->BaseId}";
 
             activeIds.Add(id);
-
-            RemoveAllMarkers();
 
             SetMarker(
                 new() {

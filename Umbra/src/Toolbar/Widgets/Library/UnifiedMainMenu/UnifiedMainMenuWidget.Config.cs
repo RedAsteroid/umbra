@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using Umbra.Common;
-
-namespace Umbra.Widgets.Library.UnifiedMainMenu;
+﻿namespace Umbra.Widgets.Library.UnifiedMainMenu;
 
 internal sealed partial class UnifiedMainMenuWidget
 {
@@ -18,6 +15,18 @@ internal sealed partial class UnifiedMainMenuWidget
                 1024,
                 true
             ),
+            new BooleanWidgetConfigVariable(
+                "EnableRightClickToRunCommand",
+                I18N.Translate("Widget.UnifiedMainMenu.Config.EnableRightClickToRunCommand.Name"),
+                I18N.Translate("Widget.UnifiedMainMenu.Config.EnableRightClickToRunCommand.Description"),
+                true
+            ),
+            new StringWidgetConfigVariable(
+                "RightClickCommand",
+                I18N.Translate("Widget.UnifiedMainMenu.Config.RightClickCommand.Name"),
+                I18N.Translate("Widget.UnifiedMainMenu.Config.RightClickCommand.Description"),
+                "/umbra"
+            ) { DisplayIf = () => GetConfigValue<bool>("EnableRightClickToRunCommand") },
             new BooleanWidgetConfigVariable(
                 "OpenSubMenusOnHover",
                 I18N.Translate("Widget.UnifiedMainMenu.Config.OpenSubMenusOnHover.Name"),

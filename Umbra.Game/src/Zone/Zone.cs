@@ -1,12 +1,7 @@
-using Dalamud.Plugin.Services;
 using Dalamud.Utility;
-using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using Umbra.Common;
+using Map = FFXIVClientStructs.FFXIV.Client.Game.UI.Map;
 using Sheet = Lumina.Excel.Sheets;
 
 namespace Umbra.Game;
@@ -209,7 +204,7 @@ internal sealed class Zone : IZone
 
             if (WeatherForecast.Count > 0) {
                 var    time       = WeatherForecast[0].Time;
-                string timeString = I18N.Translate("WeatherForecast.Always");
+                string timeString = I18N.Translate("TimeAgo.Always");
 
                 if (WeatherForecast.Count > 1) {
                     time       = WeatherForecast[1].Time;

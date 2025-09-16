@@ -1,10 +1,4 @@
-﻿using System.Collections.Generic;
-using Dalamud.Plugin.Services;
-using Umbra.Common;
-using Umbra.Windows.Components;
-using Una.Drawing;
-
-namespace Umbra.Widgets;
+﻿namespace Umbra.Widgets;
 
 internal partial class BattleEffectsPopup
 {
@@ -54,7 +48,7 @@ internal partial class BattleEffectsPopup
                             Id        = id,
                             MinValue  = minValue,
                             MaxValue  = maxValue,
-                            Value     = (int)value,
+                            Value     = formatter?.Invoke((int) value) ?? (int) value,
                         },
                         new() {
                             ClassList = ["row-value"],
@@ -74,9 +68,10 @@ internal partial class BattleEffectsPopup
             }
         };
 
-        node.BeforeDraw += _ => {
-            rowValue.NodeValue = I18N.Translate(
-                $"Widget.BattleEffects.ValueName.{valueNames[(int)GetConfigValue(configNames)]}"
+        node.BeforeDraw += n => {
+            var rawValue = (int) GetConfigValue(configNames);
+            n.QuerySelector(".row-value")!.NodeValue = I18N.Translate(
+                $"Widget.BattleEffects.ValueName.{valueNames[rawValue]}"
             );
         };
 

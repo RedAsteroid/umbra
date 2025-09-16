@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using Umbra.Common;
-using Una.Drawing;
-
-namespace Umbra.Widgets;
+﻿namespace Umbra.Widgets;
 
 [ToolbarWidget(
     "Separator",
@@ -35,9 +31,16 @@ internal class SeparatorWidget(
         ]
     };
 
-    protected override void Initialize() { }
+    protected override void Initialize()
+    {
+    }
 
     protected override void OnUpdate()
+    {
+        OnConfigurationChanged();
+    }
+
+    protected override void OnConfigurationChanged()
     {
         Node.Style.Size = new(GetConfigValue<int>("Width"), SafeHeight);
         Node line = Node.FindById("Line")!;
@@ -49,7 +52,7 @@ internal class SeparatorWidget(
             line.Style.Size     = new(0, GetConfigValue<int>("LineWidth")); // Use width for height in vertical context.
             line.Style.AutoSize = (AutoSize.Grow, AutoSize.Fit);
         } else {
-            Node.Style.Size     = new(0, SafeHeight);
+            Node.Style.Size     = new(GetConfigValue<int>("Width"), SafeHeight);
             line.Style.Size     = new(GetConfigValue<int>("LineWidth"), GetConfigValue<int>("LineHeight"));
             line.Style.AutoSize = null;
         }

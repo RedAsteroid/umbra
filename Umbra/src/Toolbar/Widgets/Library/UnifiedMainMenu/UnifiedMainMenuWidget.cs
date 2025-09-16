@@ -1,7 +1,4 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using Umbra.Common;
 
 namespace Umbra.Widgets.Library.UnifiedMainMenu;
 
@@ -33,6 +30,15 @@ internal sealed partial class UnifiedMainMenuWidget(
         Popup.OnPopupOpen          += HydratePinnedItems;
 
         Popup.SetPinnedItems(JsonConvert.DeserializeObject<List<string>>(GetConfigValue<string>("PinnedItems")) ?? []);
+
+        Node.OnRightClick += _ => {
+            if (!GetConfigValue<bool>("EnableRightClickToRunCommand")) return;
+            
+            string command = GetConfigValue<string>("RightClickCommand");
+            if (!string.IsNullOrWhiteSpace(command)) {
+                Framework.Service<IChatSender>().Send(command);
+            }
+        };
     }
 
     protected override void OnUnload()

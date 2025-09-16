@@ -1,9 +1,6 @@
 ﻿using Umbra.AuxBar;
-using Umbra.Common;
-using Umbra.Windows.Components;
 using Umbra.Windows.Library.ToolbarProfileManager;
 using Umbra.Windows.Settings.Components;
-using Una.Drawing;
 
 namespace Umbra.Windows.Settings.Modules;
 
@@ -115,49 +112,55 @@ internal class SettingsWindowToolbarWidgetsModule : SettingsWindowModule
         columnsNode.AppendChild(configNode);
         columnsNode.AppendChild(new WidgetControlColumnNode(config.Id, config.Name));
 
-        var ctrlName                  = configNode.QuerySelector<StringInputNode>(".input-name")!;
-        var ctrlVertical              = configNode.QuerySelector<CheckboxNode>(".input-vertical")!;
-        var ctrlXPos                  = configNode.QuerySelector<IntegerInputNode>(".input-x-pos")!;
-        var ctrlYPos                  = configNode.QuerySelector<IntegerInputNode>(".input-y-pos")!;
-        var ctrlAlign                 = configNode.QuerySelector<SelectNode>(".input-x-align")!;
-        var ctrlDecorate              = configNode.QuerySelector<CheckboxNode>(".input-decorate")!;
-        var ctrlShadow                = configNode.QuerySelector<CheckboxNode>(".input-shadow")!;
-        var ctrlRounded               = configNode.QuerySelector<CheckboxNode>(".input-rounded-corners")!;
-        var ctrlSpacing               = configNode.QuerySelector<IntegerInputNode>(".input-item-spacing")!;
-        var ctrlHideInCutscenes       = configNode.QuerySelector<CheckboxNode>(".input-hide-in-cutscenes")!;
-        var ctrlHideInPvP             = configNode.QuerySelector<CheckboxNode>(".input-hide-in-pvp")!;
-        var ctrlHideInDuty            = configNode.QuerySelector<CheckboxNode>(".input-hide-in-duty")!;
-        var ctrlHideInCombat          = configNode.QuerySelector<CheckboxNode>(".input-hide-in-combat")!;
-        var ctrlHideIfUnsheathed      = configNode.QuerySelector<CheckboxNode>(".input-hide-if-unsheathed")!;
-        var ctrlConditionalVisibility = configNode.QuerySelector<CheckboxNode>(".input-conditional-visibility")!;
-        var ctrlHoldKey               = configNode.QuerySelector<SelectNode>(".input-hold-key")!;
-        var ctrlShowInCutscene        = configNode.QuerySelector<CheckboxNode>(".input-show-in-cutscene")!;
-        var ctrlShowInGPose           = configNode.QuerySelector<CheckboxNode>(".input-show-in-gpose")!;
-        var ctrlShowInInstance        = configNode.QuerySelector<CheckboxNode>(".input-show-in-instance")!;
-        var ctrlShowInCombat          = configNode.QuerySelector<CheckboxNode>(".input-show-in-combat")!;
-        var ctrlShowUnsheathed        = configNode.QuerySelector<CheckboxNode>(".input-show-unsheathed")!;
+        var ctrlName                   = configNode.QuerySelector<StringInputNode>(".input-name")!;
+        var ctrlVertical               = configNode.QuerySelector<CheckboxNode>(".input-vertical")!;
+        var ctrlXPos                   = configNode.QuerySelector<IntegerInputNode>(".input-x-pos")!;
+        var ctrlYPos                   = configNode.QuerySelector<IntegerInputNode>(".input-y-pos")!;
+        var ctrlXAlign                 = configNode.QuerySelector<SelectNode>(".input-x-align")!;
+        var ctrlYAlign                 = configNode.QuerySelector<SelectNode>(".input-y-align")!;
+        var ctrlWidth                  = configNode.QuerySelector<IntegerInputNode>(".input-width")!;
+        var ctrlWidgetContentAlignment = configNode.QuerySelector<SelectNode>(".input-widget-content-alignment")!;
+        var ctrlDecorate               = configNode.QuerySelector<CheckboxNode>(".input-decorate")!;
+        var ctrlShadow                 = configNode.QuerySelector<CheckboxNode>(".input-shadow")!;
+        var ctrlRounded                = configNode.QuerySelector<CheckboxNode>(".input-rounded-corners")!;
+        var ctrlSpacing                = configNode.QuerySelector<IntegerInputNode>(".input-item-spacing")!;
+        var ctrlHideInCutscenes        = configNode.QuerySelector<CheckboxNode>(".input-hide-in-cutscenes")!;
+        var ctrlHideInPvP              = configNode.QuerySelector<CheckboxNode>(".input-hide-in-pvp")!;
+        var ctrlHideInDuty             = configNode.QuerySelector<CheckboxNode>(".input-hide-in-duty")!;
+        var ctrlHideInCombat           = configNode.QuerySelector<CheckboxNode>(".input-hide-in-combat")!;
+        var ctrlHideIfUnsheathed       = configNode.QuerySelector<CheckboxNode>(".input-hide-if-unsheathed")!;
+        var ctrlConditionalVisibility  = configNode.QuerySelector<CheckboxNode>(".input-conditional-visibility")!;
+        var ctrlHoldKey                = configNode.QuerySelector<SelectNode>(".input-hold-key")!;
+        var ctrlShowInCutscene         = configNode.QuerySelector<CheckboxNode>(".input-show-in-cutscene")!;
+        var ctrlShowInGPose            = configNode.QuerySelector<CheckboxNode>(".input-show-in-gpose")!;
+        var ctrlShowInInstance         = configNode.QuerySelector<CheckboxNode>(".input-show-in-instance")!;
+        var ctrlShowInCombat           = configNode.QuerySelector<CheckboxNode>(".input-show-in-combat")!;
+        var ctrlShowUnsheathed         = configNode.QuerySelector<CheckboxNode>(".input-show-unsheathed")!;
 
-        ctrlName.Value                  = config.Name;
-        ctrlXPos.Value                  = config.XPos;
-        ctrlYPos.Value                  = config.YPos;
-        ctrlAlign.Value                 = config.XAlign;
-        ctrlDecorate.Value              = config.Decorate;
-        ctrlVertical.Value              = config.IsVertical;
-        ctrlShadow.Value                = config.EnableShadow;
-        ctrlRounded.Value               = config.RoundedCorners;
-        ctrlSpacing.Value               = config.ItemSpacing;
-        ctrlHideInCutscenes.Value       = config.HideInCutscenes;
-        ctrlHideInPvP.Value             = config.HideInPvP;
-        ctrlHideInDuty.Value            = config.HideInDuty;
-        ctrlHideInCombat.Value          = config.HideInCombat;
-        ctrlHideIfUnsheathed.Value      = config.HideIfUnsheathed;
-        ctrlConditionalVisibility.Value = config.IsConditionallyVisible;
-        ctrlHoldKey.Value               = config.HoldKey;
-        ctrlShowInCutscene.Value        = config.ShowInCutscene;
-        ctrlShowInGPose.Value           = config.ShowInGPose;
-        ctrlShowInInstance.Value        = config.ShowInInstance;
-        ctrlShowInCombat.Value          = config.ShowInCombat;
-        ctrlShowUnsheathed.Value        = config.ShowUnsheathed;
+        ctrlName.Value                   = config.Name;
+        ctrlXPos.Value                   = config.XPos;
+        ctrlYPos.Value                   = config.YPos;
+        ctrlXAlign.Value                 = config.XAlign;
+        ctrlYAlign.Value                 = config.YAlign;
+        ctrlWidth.Value                  = config.Width;
+        ctrlWidgetContentAlignment.Value = config.WidgetContentAlignment;
+        ctrlDecorate.Value               = config.Decorate;
+        ctrlVertical.Value               = config.IsVertical;
+        ctrlShadow.Value                 = config.EnableShadow;
+        ctrlRounded.Value                = config.RoundedCorners;
+        ctrlSpacing.Value                = config.ItemSpacing;
+        ctrlHideInCutscenes.Value        = config.HideInCutscenes;
+        ctrlHideInPvP.Value              = config.HideInPvP;
+        ctrlHideInDuty.Value             = config.HideInDuty;
+        ctrlHideInCombat.Value           = config.HideInCombat;
+        ctrlHideIfUnsheathed.Value       = config.HideIfUnsheathed;
+        ctrlConditionalVisibility.Value  = config.IsConditionallyVisible;
+        ctrlHoldKey.Value                = config.HoldKey;
+        ctrlShowInCutscene.Value         = config.ShowInCutscene;
+        ctrlShowInGPose.Value            = config.ShowInGPose;
+        ctrlShowInInstance.Value         = config.ShowInInstance;
+        ctrlShowInCombat.Value           = config.ShowInCombat;
+        ctrlShowUnsheathed.Value         = config.ShowUnsheathed;
 
         ctrlName.OnValueChanged += name => {
             config.Name = name;
@@ -171,8 +174,20 @@ internal class SettingsWindowToolbarWidgetsModule : SettingsWindowModule
             config.YPos = yPos;
             AuxBarManager.Persist();
         };
-        ctrlAlign.OnValueChanged += xAlign => {
+        ctrlXAlign.OnValueChanged += xAlign => {
             config.XAlign = xAlign;
+            AuxBarManager.Persist();
+        };
+        ctrlYAlign.OnValueChanged += yAlign => {
+            config.YAlign = yAlign;
+            AuxBarManager.Persist();
+        };
+        ctrlWidth.OnValueChanged += width => {
+            config.Width = width;
+            AuxBarManager.Persist();
+        };
+        ctrlWidgetContentAlignment.OnValueChanged += widgetContentAlignment => {
+            config.WidgetContentAlignment = widgetContentAlignment;
             AuxBarManager.Persist();
         };
         ctrlVertical.OnValueChanged += vertical => {

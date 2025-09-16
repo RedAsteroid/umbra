@@ -1,18 +1,11 @@
 ﻿using Dalamud.Game.ClientState.Keys;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using Lumina.Extensions;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
-using Umbra.Common;
-using Umbra.Game;
 using Umbra.Widgets.System;
 using Umbra.Windows;
 using Umbra.Windows.Dialogs;
-using Una.Drawing;
 
 namespace Umbra.AuxBar;
 
@@ -88,6 +81,7 @@ internal sealed class AuxBarManager : IDisposable
             XPos                   = Toolbar.AuxBarXPos,
             YPos                   = Toolbar.AuxBarYPos,
             XAlign                 = Toolbar.AuxBarXAlign,
+            YAlign                 = Toolbar.AuxBarYAlign,
             IsEnabled              = Toolbar.AuxBarEnabled,
             Decorate               = Toolbar.AuxBarDecorate,
             EnableShadow           = Toolbar.AuxEnableShadow,
@@ -125,10 +119,10 @@ internal sealed class AuxBarManager : IDisposable
            .Where(node => node.Item1.WidgetCount > 0)
            .ToList();
 
-    public AuxBarConfig CreateBar()
+    public AuxBarConfig CreateBar(string id)
     {
         var config = new AuxBarConfig {
-            Id   = $"aux{AuxBarConfigs.Count}",
+            Id   = id,
             Name = $"Aux Bar #{AuxBarConfigs.Count + 1}",
         };
 
@@ -137,6 +131,11 @@ internal sealed class AuxBarManager : IDisposable
         Persist();
 
         return config;
+    }
+    
+    public AuxBarConfig CreateBar()
+    {
+        return CreateBar($"aux{Guid.NewGuid():N}");
     }
 
     public void DeleteBar(string id, bool confirm = true, bool persist = true)
@@ -252,6 +251,7 @@ internal sealed class AuxBarManager : IDisposable
         if (config.ShowUnsheathed && player.IsWeaponDrawn) return true;
         if (config.ShowInGPose && GameMain.IsInGPose()) return true;
 
+        // TODO: Only test for HasOpenPopup if the originating widget is in this aux bar.
         return Framework.Service<WidgetManager>().HasOpenPopup;
     }
 }

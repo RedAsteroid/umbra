@@ -1,10 +1,4 @@
-﻿using ImGuiNET;
-using System;
-using System.Numerics;
-using Umbra.Common;
-using Una.Drawing;
-
-namespace Umbra.Widgets;
+﻿namespace Umbra.Widgets;
 
 [Service]
 internal sealed class ContextMenuManager(UmbraDelvClipRects clipRects) : IDisposable
@@ -38,6 +32,7 @@ internal sealed class ContextMenuManager(UmbraDelvClipRects clipRects) : IDispos
         }
 
         menu.OnEntryInvoked += OnEntryInvoked;
+        menu.Node.ComputeBoundingSize();
 
         _contextMenu   = menu;
         _closeCallback = closeCallback;
@@ -60,20 +55,29 @@ internal sealed class ContextMenuManager(UmbraDelvClipRects clipRects) : IDispos
             return;
         }
 
-        Rect boundingBox = _contextMenu.Node.Bounds.MarginRect;
+        if (!_isOpen) {
+            ImGui.OpenPopup(_contextMenu.Id);
+            // Poor-mans solution to get accurate sizes for the first frame so that ImGui
+            // is able to position the popup correctly immediately.
+            _contextMenu.Node.Style.IsVisible = false;
+            _contextMenu.Node.Render(ImGui.GetBackgroundDrawList(), new(0, 0));
+            _contextMenu.Node.Style.IsVisible = true;
+
+            _isOpen = true;
+        }
+
+        Size boundingBox = _contextMenu.Node.Bounds.MarginSize;
         ImGui.SetNextWindowSize(new(boundingBox.Width + 32, boundingBox.Height + 32));
 
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding,    Vector2.Zero);
-        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding,     Vector2.Zero);
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding,   0f);
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
+        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, Vector2.Zero);
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0f);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f);
-        ImGui.PushStyleColor(ImGuiCol.Border,  0);
+        ImGui.PushStyleColor(ImGuiCol.Border, 0);
         ImGui.PushStyleColor(ImGuiCol.PopupBg, 0);
 
         if (ImGui.BeginPopup(_contextMenu.Id, ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoSavedSettings)) {
-            // Vector2 cursorPos = ImGui.GetCursorScreenPos();
-            // Vector2 position    = new(cursorPos.X + 16, cursorPos.Y + 16);
             Vector2 position = new(16, 16);
 
             _contextMenu.Node.Render(ImGui.GetWindowDrawList(), position);
@@ -82,7 +86,7 @@ internal sealed class ContextMenuManager(UmbraDelvClipRects clipRects) : IDispos
 
             ImGui.EndPopup();
         } else if (_isOpen) {
-            _isOpen      = false;
+            _isOpen = false;
 
             ImGui.PopStyleColor(2);
             ImGui.PopStyleVar(5);
@@ -91,12 +95,6 @@ internal sealed class ContextMenuManager(UmbraDelvClipRects clipRects) : IDispos
             _closeCallback?.Invoke();
             _contextMenu = null;
             return;
-        }
-
-        if (!_isOpen) {
-            _contextMenu.Node.Reflow();
-            ImGui.OpenPopup(_contextMenu.Id);
-            _isOpen = true;
         }
 
         ImGui.PopStyleColor(2);

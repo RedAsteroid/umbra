@@ -1,9 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Numerics;
-using Umbra.Common;
-using Umbra.Game;
-
-namespace Umbra.Widgets;
+﻿namespace Umbra.Widgets;
 
 [ToolbarWidget(
     "Coordinates",
@@ -22,6 +17,14 @@ internal sealed class CoordinatesWidget(
         StandardWidgetFeatures.SubText;
 
     private IZoneManager ZoneManager { get; } = Framework.Service<IZoneManager>();
+
+    protected override void OnLoad()
+    {
+        Node.OnRightClick += _ => {
+            Vector2 coords = ZoneManager.CurrentZone.PlayerCoordinates;
+            ImGui.SetClipboardText($"{coords.X:F1}, {coords.Y:F1}");
+        };
+    }
 
     protected override void OnDraw()
     {

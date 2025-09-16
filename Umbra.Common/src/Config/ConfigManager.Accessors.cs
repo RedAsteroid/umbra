@@ -14,9 +14,7 @@
  *     GNU Affero General Public License for more details.
  */
 
-using System;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Umbra.Common;
 
@@ -75,7 +73,7 @@ public static partial class ConfigManager
 
         if (persist) {
             _debounceTimer?.Dispose();
-            _debounceTimer = new (Persist, null, 1000, Timeout.Infinite);
+            _debounceTimer = new (Persist, null, 100, Timeout.Infinite);
         }
     }
 

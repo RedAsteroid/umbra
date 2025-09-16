@@ -1,14 +1,8 @@
 ﻿using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility;
-using ImGuiNET;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
+
 using System.Threading.Tasks;
-using Umbra.Common;
-using Una.Drawing;
 using Una.Drawing.Texture;
 
 namespace Umbra.Windows.FaIconPicker;
@@ -49,7 +43,7 @@ public class BitmapIconGridNode : Node
     {
         Selected  = selected;
         NodeValue = " ";
-        ClassList = ["fa-icon-grid"];
+        ClassList = ["fa-icon-grid", "scrollbars"];
 
         FilterIconListInternal();
     }
@@ -72,6 +66,10 @@ public class BitmapIconGridNode : Node
         ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0, 0));
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0, 0));
         ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(8 * ScaleFactor));
+        ImGui.PushStyleColor(ImGuiCol.ScrollbarBg, Color.GetNamedColor("Window.ScrollbarTrack"));
+        ImGui.PushStyleColor(ImGuiCol.ScrollbarGrab, Color.GetNamedColor("Window.ScrollbarThumb"));
+        ImGui.PushStyleColor(ImGuiCol.ScrollbarGrabHovered, Color.GetNamedColor("Window.ScrollbarThumbHover"));
+        ImGui.PushStyleColor(ImGuiCol.ScrollbarGrabActive, Color.GetNamedColor("Window.ScrollbarThumbActive"));
         ImGui.SetCursorScreenPos(pos);
 
         if (ImGui.BeginChild("BitmapIconPickerIconGrid", size.ToVector2(), false, ImGuiWindowFlags.NoMove)) {
@@ -80,6 +78,7 @@ public class BitmapIconGridNode : Node
 
         ImGui.EndChild();
         ImGui.PopStyleVar(3);
+        ImGui.PopStyleColor(4);
     }
 
     private void FilterIconList()
@@ -119,7 +118,7 @@ public class BitmapIconGridNode : Node
             Vector2 s1     = new(center.X - (size.X / 2), center.Y - (size.Y / 2));
             Vector2 s2     = new(center.X + (size.X / 2), center.Y + (size.Y / 2));
 
-            drawList.AddImage(wrap.ImGuiHandle, s1, s2);
+            drawList.AddImage(wrap.Handle, s1, s2);
         }
 
         if (icon == Selected) {

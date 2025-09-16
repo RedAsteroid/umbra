@@ -1,9 +1,4 @@
-﻿using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.UI;
-using System.Collections.Generic;
-using Umbra.Common;
-using Umbra.Game;
-using Una.Drawing;
+﻿using FFXIVClientStructs.FFXIV.Client.UI;
 
 namespace Umbra.Widgets;
 
@@ -113,7 +108,6 @@ internal sealed partial class CurrenciesWidget(
             ProgressBarNode.UseOverflow     = true;
             ProgressBarNode.Value           = 200;
         } else {
-            SingleLabelTextNode.Style.Color = null;
             ProgressBarNode.UseOverflow     = false;
 
             if (currency.WeeklyCapacity > 0) {

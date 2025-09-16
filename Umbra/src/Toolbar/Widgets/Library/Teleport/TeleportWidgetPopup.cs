@@ -1,9 +1,9 @@
-﻿using Una.Drawing;
-
-namespace Umbra.Widgets;
+﻿namespace Umbra.Widgets;
 
 internal partial class TeleportWidgetPopup : WidgetPopup
 {
+    public bool ReverseCondensedElements { get; set; } = false;
+    
     protected override Node Node { get; }
 
     private UdtDocument Document { get; }

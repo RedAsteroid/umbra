@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Umbra.Common;
-
-namespace Umbra.Widgets;
+﻿namespace Umbra.Widgets;
 
 [ToolbarWidget(
     "CollectionItemButton",
@@ -22,7 +18,11 @@ internal sealed partial class CollectionItemButtonWidget(
     {
         LoadCollectionItems();
         SetText("Collection");
-
+        
+        // OnConfigurationChanged is invoked _before_ OnLoad, but we need Items to be loaded first.
+        // Let's just call it again...
+        OnConfigurationChanged();
+        
         Node.OnMouseUp += Invoke;
     }
 

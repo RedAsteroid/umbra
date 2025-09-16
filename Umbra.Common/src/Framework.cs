@@ -14,16 +14,8 @@
  *     GNU Affero General Public License for more details.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
 using Dalamud.Plugin;
-using Dalamud.Plugin.Services;
-using ImGuiNET;
-using System.Numerics;
-using System.Text;
+using Umbra.Common.Migration;
 
 namespace Umbra.Common;
 
@@ -56,10 +48,13 @@ public static class Framework
         DalamudFramework = dalamudFramework;
         LocalCharacterId = charId;
 
-        // Always make sure config is loaded first.
-        ConfigManager.Initialize();
-
         await CrashLogger.Guard("Umbra failed to start", async () => {
+            // Run migrations before loading the configuration.
+            await MigrationManager.Run();
+        
+            // Always make sure config is loaded first.
+            ConfigManager.Initialize();
+            
             foreach (var initializer in GetMethodInfoListWith<WhenFrameworkAsyncCompilingAttribute>()) {
                 await (Task)initializer.Invoke(null, null)!;
             }
@@ -97,7 +92,8 @@ public static class Framework
 
     public static async Task RunDelayed(double timeoutMilliseconds, Action callback)
     {
-        if (callback == null) throw new ArgumentNullException(nameof(callback));
+        ArgumentNullException.ThrowIfNull(callback);
+        
         if (timeoutMilliseconds < 0) throw new ArgumentOutOfRangeException(nameof(timeoutMilliseconds), "Delay must be non-negative.");
 
         await Task.Delay(TimeSpan.FromMilliseconds(timeoutMilliseconds));

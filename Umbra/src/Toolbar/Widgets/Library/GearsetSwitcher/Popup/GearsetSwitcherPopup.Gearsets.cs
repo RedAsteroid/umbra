@@ -1,14 +1,9 @@
-﻿using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using System.Collections.Generic;
-using Umbra.Common;
-using Umbra.Game;
-using Una.Drawing;
-
-namespace Umbra.Widgets.Popup;
+﻿namespace Umbra.Widgets.Popup;
 
 internal sealed partial class GearsetSwitcherPopup
 {
+    public List<string> PrefixList { get; internal set; } = [];
+
     private readonly Dictionary<Node, Gearset> _nodeToGearset = [];
 
     private void UpdateGearsetButtons()
@@ -44,16 +39,37 @@ internal sealed partial class GearsetSwitcherPopup
 
     private void OnGearsetCreatedOrUpdated(Gearset gearset)
     {
-        string  nodeId = $"Gearset_{gearset.Id}";
-        Node?   node   = Node.QuerySelector($"#{nodeId}");
-        Node    group  = GearsetGroupNodes[gearset.Category];
-        JobInfo job    = Player.GetJobInfo(gearset.JobId);
+        string nodeId = $"Gearset_{gearset.Id}";
+        Node?  node   = Node.QuerySelector($"#{nodeId}");
+        Node   group  = GearsetGroupNodes[gearset.Category];
 
-        if (_hidePrefix.Length > 0 && gearset.Name.StartsWith(_hidePrefix)) {
-            node?.Dispose();
-            return;
+        if (PrefixList.Count > 0) {
+            if (!_inverseHidePrefixLogic) {
+                foreach (var prefix in PrefixList) {
+                    if (gearset.Name.StartsWith(prefix)) {
+                        node?.Dispose();
+                        UpdateColumns();
+                        return;
+                    }
+                }
+            } else {
+                bool gsMatchesPrefix = false;
+
+                foreach (var prefix in PrefixList) {
+                    if (gearset.Name.StartsWith(prefix)) {
+                        gsMatchesPrefix = true;
+                        break;
+                    }
+                }
+
+                if (!gsMatchesPrefix) {
+                    node?.Dispose();
+                    UpdateColumns();
+                    return;
+                }
+            }
         }
-        
+
         if (null == node) {
             node = Document.CreateNodeFromTemplate("gearset", []);
             node.ToggleClass("with-gradient", _showGradientButtons);
@@ -82,14 +98,30 @@ internal sealed partial class GearsetSwitcherPopup
         node.QuerySelector(".icon")!.Style.Size = new(_buttonHeight - 4, _buttonHeight - 4);
 
         float s = Node.ScaleFactor;
-        node.QuerySelector(".progress-bar-wrapper")!.Style.Margin = new((_buttonHeight - 8) * s, 8 * s, 4 * s,  (_buttonHeight - 3) * s);
-        
-        node.QuerySelector(".icon")!.Style.IconId    = job.Icons[_buttonIconType];
-        node.QuerySelector(".name")!.NodeValue       = gearset.Name;
+        node.QuerySelector(".progress-bar-wrapper")!.Style.Margin = new((_buttonHeight - 8) * s, 8 * s, 4 * s, (_buttonHeight - 3) * s);
+
+        SetIcon(node.QuerySelector(".icon")!, _buttonIconType, gearset);
+
+        node.QuerySelector(".name")!.NodeValue       = GetGearsetName(gearset);
         node.QuerySelector(".level")!.NodeValue      = GearsetSwitcherInfoDisplayProvider.GetInfoText(GearsetSwitcherInfoDisplayType.JobLevel, gearset, false);
         node.QuerySelector(".item-level")!.NodeValue = $"{gearset.ItemLevel}";
 
         group.QuerySelector(".body")!.AppendChild(node);
+        UpdateColumns();
+    }
+    
+    private string GetGearsetName(Gearset gearset)
+    {
+        bool hidePrefixFromNames = _hidePrefixFromNames;
+        if (!hidePrefixFromNames) return gearset.Name;
+
+        foreach (string prefix in PrefixList) {
+            if (gearset.Name.StartsWith(prefix)) {
+                return gearset.Name[prefix.Length..].TrimStart();
+            }
+        }
+
+        return gearset.Name;
     }
 
     private void OnGearsetRemoved(Gearset gearset)
@@ -99,6 +131,7 @@ internal sealed partial class GearsetSwitcherPopup
 
         node.Dispose();
         _nodeToGearset.Remove(node);
+        UpdateColumns();
     }
 
     private void OnGearsetEquipped(Gearset gearset)

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Umbra.AuxBar;
+﻿namespace Umbra.AuxBar;
 
 [Serializable]
 public class AuxBarConfig
@@ -13,7 +11,10 @@ public class AuxBarConfig
     public int    ItemSpacing            { get; set; } = 2;
     public int    XPos                   { get; set; } = 50;
     public int    YPos                   { get; set; } = 50;
+    public int    Width                  { get; set; } = 0;
+    public string WidgetContentAlignment { get; set; } = "Center";
     public string XAlign                 { get; set; } = "Center";
+    public string YAlign                 { get; set; } = "Top";
     public bool   EnableShadow           { get; set; } = true;
     public bool   HideInCutscenes        { get; set; } = true;
     public bool   HideInPvP              { get; set; }
@@ -36,7 +37,10 @@ public class AuxBarConfig
         Decorate               = other.Decorate;
         XPos                   = other.XPos;
         YPos                   = other.YPos;
+        Width                  = other.Width;
+        WidgetContentAlignment = other.WidgetContentAlignment;
         XAlign                 = other.XAlign;
+        YAlign                 = other.YAlign;
         EnableShadow           = other.EnableShadow;
         HideInCutscenes        = other.HideInCutscenes;
         HideInPvP              = other.HideInPvP;

@@ -1,13 +1,6 @@
-﻿using Dalamud.Interface;
-using Dalamud.Interface.Utility;
-using ImGuiNET;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
+﻿using Dalamud.Interface.Utility;
+
 using System.Threading.Tasks;
-using Umbra.Common;
-using Una.Drawing;
 
 namespace Umbra.Windows.FaIconPicker;
 
@@ -45,7 +38,7 @@ public class FaIconGridNode : Node
     {
         Selected  = selected;
         NodeValue = " ";
-        ClassList = ["fa-icon-grid"];
+        ClassList = ["fa-icon-grid", "scrollbars"];
 
         FilterIconListInternal();
     }
@@ -68,6 +61,10 @@ public class FaIconGridNode : Node
         ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0, 0));
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0, 0));
         ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(8 * ScaleFactor));
+        ImGui.PushStyleColor(ImGuiCol.ScrollbarBg, Color.GetNamedColor("Window.ScrollbarTrack"));
+        ImGui.PushStyleColor(ImGuiCol.ScrollbarGrab, Color.GetNamedColor("Window.ScrollbarThumb"));
+        ImGui.PushStyleColor(ImGuiCol.ScrollbarGrabHovered, Color.GetNamedColor("Window.ScrollbarThumbHover"));
+        ImGui.PushStyleColor(ImGuiCol.ScrollbarGrabActive, Color.GetNamedColor("Window.ScrollbarThumbActive"));
         ImGui.SetCursorScreenPos(pos);
 
         Framework.DalamudPlugin.UiBuilder.IconFontHandle.Push();
@@ -80,6 +77,7 @@ public class FaIconGridNode : Node
 
         ImGui.EndChild();
         ImGui.PopStyleVar(3);
+        ImGui.PopStyleColor(4);
     }
 
     private void FilterIconList()

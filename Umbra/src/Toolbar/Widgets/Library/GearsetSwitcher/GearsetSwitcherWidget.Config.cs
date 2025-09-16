@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using Umbra.Common;
-using Umbra.Game;
-
-namespace Umbra.Widgets;
+﻿namespace Umbra.Widgets;
 
 internal sealed partial class GearsetSwitcherWidget
 {
@@ -13,12 +9,21 @@ internal sealed partial class GearsetSwitcherWidget
 
             ..GetWidgetConfigVariables(),
             ..GetPopupConfigVariables(),
+            ConfigVariableProgressBarUseRoleColors(),
         ];
     }
 
     private IEnumerable<IWidgetConfigVariable> GetWidgetConfigVariables()
     {
         return [
+            new StringWidgetConfigVariable(
+                "CustomLabel",
+                I18N.Translate("Widget.GearsetSwitcher.Config.CustomLabel.Name"),
+                I18N.Translate("Widget.GearsetSwitcher.Config.CustomLabel.Description"),
+                "",
+                1024,
+                true
+            ),
             new EnumWidgetConfigVariable<JobIconType>(
                 "WidgetButtonIconType",
                 I18N.Translate("Widget.GearsetSwitcher.Config.WidgetButtonIconType.Name"),
@@ -49,12 +54,21 @@ internal sealed partial class GearsetSwitcherWidget
     private IEnumerable<IWidgetConfigVariable> GetPopupConfigVariables()
     {
         return [
+            new BooleanWidgetConfigVariable(
+                "ShowHeader",
+                I18N.Translate("Widget.GearsetSwitcher.Config.ShowHeader.Name"),
+                I18N.Translate("Widget.GearsetSwitcher.Config.ShowHeader.Description"),
+                true
+            ) { Category = I18N.Translate("Widget.ConfigCategory.MenuAppearance") },
             new EnumWidgetConfigVariable<JobIconType>(
                 "PopupHeaderIconType",
                 I18N.Translate("Widget.GearsetSwitcher.Config.PopupHeaderIconType.Name"),
                 I18N.Translate("Widget.GearsetSwitcher.Config.PopupHeaderIconType.Description"),
                 JobIconType.Glowing
-            ) { Category = I18N.Translate("Widget.ConfigCategory.MenuAppearance") },
+            ) {
+                Category  = I18N.Translate("Widget.ConfigCategory.MenuAppearance"),
+                DisplayIf = () => GetConfigValue<bool>("ShowHeader"),
+            },
             new EnumWidgetConfigVariable<JobIconType>(
                 "PopupButtonIconType",
                 I18N.Translate("Widget.GearsetSwitcher.Config.PopupButtonIconType.Name"),
@@ -77,12 +91,28 @@ internal sealed partial class GearsetSwitcherWidget
                 20,
                 100
             ) { Category = I18N.Translate("Widget.ConfigCategory.MenuAppearance") },
+            new SelectWidgetConfigVariable(
+                "FilterLogic",
+                I18N.Translate("Widget.GearsetSwitcher.Config.FilterLogic.Name"),
+                I18N.Translate("Widget.GearsetSwitcher.Config.FilterLogic.Description"),
+                "Hide",
+                new() {
+                    { "Hide", I18N.Translate("Widget.GearsetSwitcher.Config.FilterLogic.Option.Hide") },
+                    { "Show", I18N.Translate("Widget.GearsetSwitcher.Config.FilterLogic.Option.Show") }
+                }
+            ) { Category = I18N.Translate("Widget.ConfigCategory.MenuAppearance") },
             new StringWidgetConfigVariable(
                 "HidePrefix",
-                I18N.Translate("Widget.GearsetSwitcher.Config.HidePrefixedGearsets.Name"),
-                I18N.Translate("Widget.GearsetSwitcher.Config.HidePrefixedGearsets.Description"),
+                I18N.Translate("Widget.GearsetSwitcher.Config.GearsetFilterInput.Name"),
+                I18N.Translate("Widget.GearsetSwitcher.Config.GearsetFilterInput.Description"),
                 string.Empty,
                 32
+            ) { Category = I18N.Translate("Widget.ConfigCategory.MenuAppearance") },
+            new BooleanWidgetConfigVariable(
+                "HidePrefixFromNames",
+                I18N.Translate("Widget.GearsetSwitcher.Config.HidePrefixFromNames.Name"),
+                I18N.Translate("Widget.GearsetSwitcher.Config.HidePrefixFromNames.Description"),
+                false
             ) { Category = I18N.Translate("Widget.ConfigCategory.MenuAppearance") },
             new BooleanWidgetConfigVariable(
                 "EnableRoleScrolling",
@@ -191,4 +221,14 @@ internal sealed partial class GearsetSwitcherWidget
             },
         ];
     }
+
+    private BooleanWidgetConfigVariable ConfigVariableProgressBarUseRoleColors() => new(
+        "ProgressBarUseRoleColors",
+        I18N.Translate("Widget.GearsetSwitcher.Config.ProgressbarUseRoleColors.Name"),
+        I18N.Translate("Widget.GearsetSwitcher.Config.ProgressbarUseRoleColors.Description"),
+        false
+    ) {
+        Category = I18N.Translate("Widgets.Standard.Config.Category.ProgressBar"),
+        DisplayIf = () => GetConfigValue<bool>("UseCustomProgressBarColor") == false,
+    };
 }

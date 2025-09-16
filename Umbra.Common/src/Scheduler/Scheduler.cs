@@ -14,20 +14,14 @@
  *     GNU Affero General Public License for more details.
  */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using Dalamud.Plugin.Services;
 using System.Diagnostics;
-using System.Threading.Tasks;
 
 namespace Umbra.Common;
 
 internal static class Scheduler
 {
     internal static bool  EnableHitchWarnings  { get; set; } = false;
-    internal static float TickHitchThresholdMs { get; set; } = 50.0f;
+    internal static float TickHitchThresholdMs { get; set; } = 16.0f;
     internal static float DrawHitchThresholdMs { get; set; } = 16.0f;
 
     private static List<TickHandler> _onTickHandlers = [];

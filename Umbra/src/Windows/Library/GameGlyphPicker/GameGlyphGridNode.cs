@@ -1,12 +1,7 @@
 ﻿using Dalamud.Game.Text;
 using Dalamud.Interface.Utility;
-using ImGuiNET;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
+
 using System.Threading.Tasks;
-using Una.Drawing;
 
 namespace Umbra.Windows.GameGlyphPicker;
 
@@ -68,6 +63,10 @@ public class GameGlyphGridNode : Node
         ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0, 0));
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0, 0));
         ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(8 * ScaleFactor));
+        ImGui.PushStyleColor(ImGuiCol.ScrollbarBg, Color.GetNamedColor("Window.ScrollbarTrack"));
+        ImGui.PushStyleColor(ImGuiCol.ScrollbarGrab, Color.GetNamedColor("Window.ScrollbarThumb"));
+        ImGui.PushStyleColor(ImGuiCol.ScrollbarGrabHovered, Color.GetNamedColor("Window.ScrollbarThumbHover"));
+        ImGui.PushStyleColor(ImGuiCol.ScrollbarGrabActive, Color.GetNamedColor("Window.ScrollbarThumbActive"));
         ImGui.SetCursorScreenPos(pos);
 
         if (ImGui.BeginChild("SeIconPickerIconGrid", size.ToVector2(), false, ImGuiWindowFlags.NoMove)) {
@@ -76,6 +75,7 @@ public class GameGlyphGridNode : Node
 
         ImGui.EndChild();
         ImGui.PopStyleVar(3);
+        ImGui.PopStyleColor(4);
     }
 
     private void FilterIconList()

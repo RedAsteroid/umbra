@@ -1,6 +1,4 @@
-﻿using Umbra.Common;
-
-namespace Umbra;
+﻿namespace Umbra;
 
 internal partial class Toolbar
 {
@@ -65,6 +63,12 @@ internal partial class Toolbar
 
     [ConfigVariable("Toolbar.AuxBar.XAlign", options: ["Left", "Center", "Right"])]
     public static string AuxBarXAlign { get; set; } = "Center";
+    
+    [ConfigVariable("Toolbar.AuxBar.YAlign", options: ["Top", "Center", "Bottom"])]
+    public static string AuxBarYAlign { get; set; } = "Top";
+
+    [ConfigVariable("Toolbar.AuxBar.Width", min: 0)]
+    public static int AuxBarWidth { get; set; } = 0;
 
     [ConfigVariable("Toolbar.AuxBar.EnableShadow")]
     public static bool AuxEnableShadow { get; set; } = true;

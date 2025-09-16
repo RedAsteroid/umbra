@@ -3,7 +3,7 @@
     
     <node id="main">
         <node class="list-panel">
-            <node class="list" overflow="false">
+            <node class="list scrollbars" overflow="false">
                 <node id="bar-list"/>
             </node>
             <node class="footer">
@@ -21,19 +21,22 @@
     </node>
     
     <template name="aux-config">
-        <node class="config" overflow="false">
+        <node class="config scrollbars" overflow="false">
             <node class="list">
                 <string-input-node class="input-name" label="_L(Settings.WidgetsModule.Aux.Name.Name)"/>
                 <separator label="_L(Settings.WidgetsModule.Aux.Positioning)"/>
-                <integer-input-node class="input-x-pos" label="_L(Settings.WidgetsModule.Aux.XPosition.Name)" description="_L(Settings.WidgetsModule.Aux.XPosition.Description)"/>
-                <integer-input-node class="input-y-pos" label="_L(Settings.WidgetsModule.Aux.YPosition.Name)" description="_L(Settings.WidgetsModule.Aux.YPosition.Description)"/>
+                <integer-input-node class="input-x-pos" label="_L(Settings.WidgetsModule.Aux.XPosition.Name)" description="_L(Settings.WidgetsModule.Aux.XPosition.Description)" draggable="{true}"/>
+                <integer-input-node class="input-y-pos" label="_L(Settings.WidgetsModule.Aux.YPosition.Name)" description="_L(Settings.WidgetsModule.Aux.YPosition.Description)" draggable="{true}"/>
                 <select-node class="input-x-align" label="_L(Settings.WidgetsModule.Aux.XAlign.Name)" description="_L(Settings.WidgetsModule.Aux.XAlign.Description)" choices="{['Left', 'Center', 'Right']}"/>
+                <select-node class="input-y-align" label="_L(Settings.WidgetsModule.Aux.YAlign.Name)" description="_L(Settings.WidgetsModule.Aux.YAlign.Description)" choices="{['Top', 'Center', 'Bottom']}"/>
                 <separator label="_L(Settings.WidgetsModule.Aux.Appearance)"/>
                 <checkbox-node class="input-vertical" label="_L(Settings.WidgetsModule.Aux.Vertical.Name)" description="_L(Settings.WidgetsModule.Aux.Vertical.Description)"/>
                 <checkbox-node class="input-decorate" label="_L(Settings.WidgetsModule.Aux.Decorate.Name)" description="_L(Settings.WidgetsModule.Aux.Decorate.Description)"/>
                 <checkbox-node class="input-shadow" label="_L(Settings.WidgetsModule.Aux.EnableShadow.Name)" description="_L(Settings.WidgetsModule.Aux.EnableShadow.Description)"/>
                 <checkbox-node class="input-rounded-corners" label="_L(Settings.WidgetsModule.Aux.RoundedCorners.Name)" description="_L(Settings.WidgetsModule.Aux.RoundedCorners.Description)"/>
                 <integer-input-node class="input-item-spacing" label="_L(Settings.WidgetsModule.Aux.ItemSpacing.Name)" description="_L(Settings.WidgetsModule.Aux.ItemSpacing.Description)"/>
+                <integer-input-node class="input-width" label="_L(Settings.WidgetsModule.Aux.Width.Name)" description="_L(Settings.WidgetsModule.Aux.Width.Description)" draggable="{true}" min-value="0"/>
+                <select-node class="input-widget-content-alignment" label="_L(Settings.WidgetsModule.Aux.WidgetContentAlignment.Name)" description="_L(Settings.WidgetsModule.Aux.WidgetContentAlignment.Description)" choices="{['Left', 'Center', 'Right']}"/>
                 <separator label="_L(Settings.WidgetsModule.Aux.Visibility)"/>
                 <checkbox-node class="input-hide-in-cutscenes" label="_L(Settings.WidgetsModule.Aux.HideInCutscenes.Name)" description="_L(Settings.WidgetsModule.Aux.HideInCutscenes.Description)"/>
                 <checkbox-node class="input-hide-in-pvp" label="_L(Settings.WidgetsModule.Aux.HideInPvP.Name)" description="_L(Settings.WidgetsModule.Aux.HideInPvP.Description)"/>
@@ -77,7 +80,6 @@
                 flow: vertical;
                 auto-size: grow;
                 gap: 8;
-                scrollbar-track-color: 0;
                 
                 & > #bar-list {
                     flow: vertical;
@@ -163,7 +165,6 @@
                     auto-size: grow;
                     flow: vertical;
                     background-color: "Window.Background";
-                    scrollbar-track-color: 0;
                     stroke-color: "Input.Background";
                     stroke-width: 1;
                     border-radius: 5;

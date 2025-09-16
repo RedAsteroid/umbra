@@ -1,12 +1,7 @@
-﻿using ImGuiNET;
+﻿
 using Lumina.Misc;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
-using Umbra.Common;
-using Umbra.Game;
-using Una.Drawing;
+using Umbra.AuxBar;
 
 namespace Umbra.Widgets.System;
 
@@ -17,17 +12,17 @@ internal sealed partial class WidgetManager : IDisposable
     public event Action<ToolbarWidget>?         OnWidgetRemoved;
     public event Action<ToolbarWidget, string>? OnWidgetRelocated;
 
-    private readonly Dictionary<string, Type>          _widgetTypes = [];
-    private readonly Dictionary<string, WidgetInfo>    _widgetInfos = [];
-    private readonly Dictionary<string, ToolbarWidget> _instances   = [];
+    private readonly Dictionary<string, Type>          _widgetTypes                = [];
+    private readonly Dictionary<string, WidgetInfo>    _widgetInfos                = [];
+    private readonly Dictionary<string, ToolbarWidget> _instances                  = [];
+    private readonly HashSet<Node>                     _subscribedQuickAccessNodes = [];
 
     private Toolbar            Toolbar   { get; }
     private IPlayer            Player    { get; }
     private UmbraDelvClipRects ClipRects { get; }
 
-    private byte          _lastJobId;
-    private bool          _quickAccessEnabled;
-    private HashSet<Node> _subscribedQuickAccessNodes = [];
+    private byte _lastJobId;
+    private bool _quickAccessEnabled;
 
     public WidgetManager(Toolbar toolbar, IPlayer player, UmbraDelvClipRects clipRects)
     {
@@ -48,7 +43,7 @@ internal sealed partial class WidgetManager : IDisposable
         }
 
         ConfigManager.CvarChanged += OnCvarChanged;
-        
+
         LoadProfileData();
         LoadState();
     }
@@ -158,16 +153,30 @@ internal sealed partial class WidgetManager : IDisposable
 
             var panel = Toolbar.GetPanel(location);
             if (panel == null) {
-                Logger.Error($"Attempted to create a widget in an invalid location '{location}'.");
-                return;
+                if (! location.StartsWith("aux")) {
+                    Logger.Error($"Attempted to create a widget in an invalid location '{location}'.");
+                    return;
+                }
+                
+                // Create the aux bar if it doesn't exist yet.
+                var aux = Framework.Service<AuxBarManager>().CreateBar(location);
+                panel = Toolbar.GetPanel(aux.Id);
+
+                if (panel == null) {
+                    // This should never happen.
+                    Logger.Error($"Attempted to create a widget in an invalid aux bar location '{location}', but the aux bar could not be created.");
+                    return;
+                }
             }
 
             var widget = (ToolbarWidget)Activator.CreateInstance(type, info, guid, configValues)!;
 
-            widget.SortIndex =   sortIndex ?? panel.ChildNodes.Count;
+            widget.SortIndex =   sortIndex ?? panel!.ChildNodes.Count;
             widget.Location  =   location;
             widget.Node.Id   ??= $"UmbraWidget_{Crc32.Get(widget.Id)}";
 
+            widget.Node.Attach("Widget", widget);
+            
             widget.Setup();
             widget.OpenPopup        += OpenPopup;
             widget.OpenPopupDelayed += OpenPopupIfAnyIsOpen;
@@ -240,8 +249,7 @@ internal sealed partial class WidgetManager : IDisposable
 
     public void CreateCopyOfWidget(string id)
     {
-        Framework.DalamudFramework.Run(
-            () => {
+        Framework.DalamudFramework.Run(() => {
                 lock (_widgetState) {
                     if (!_instances.TryGetValue(id, out var widget)) return;
                     if (!_widgetState.TryGetValue(id, out var config)) return;
@@ -304,13 +312,13 @@ internal sealed partial class WidgetManager : IDisposable
 
         foreach (var widget in _instances.Values.ToImmutableArray()) {
             if (widget.Node.ParentNode is null) continue;
-            
+
             string panelId = widget.Node.ParentNode!.Id!;
 
             if (widget.Location != panelId) {
                 var panel = Toolbar.GetPanel(widget.Location);
                 if (panel == null) continue;
-                
+
                 panel.AppendChild(widget.Node);
                 SolveSortIndices(widget.Location);
                 SolveSortIndices(panelId);
@@ -319,7 +327,7 @@ internal sealed partial class WidgetManager : IDisposable
                 SaveState();
                 OnWidgetRelocated?.Invoke(widget, panelId);
             }
-            
+
             widget.Update();
             widget.Node.SortIndex = widget.SortIndex;
         }
@@ -363,9 +371,17 @@ internal sealed partial class WidgetManager : IDisposable
 
     private void OnCvarChanged(string name)
     {
-        if (name == "Toolbar.WidgetData") LoadState();
-        if (name == "Toolbar.ProfileData") LoadProfileData();
-        if (name == "Toolbar.EnableQuickSettingAccess") ToggleQuickAccessBindings();
+        switch (name) {
+            case "Toolbar.WidgetData":
+                LoadState();
+                break;
+            case "Toolbar.ProfileData":
+                LoadProfileData();
+                break;
+            case "Toolbar.EnableQuickSettingAccess":
+                ToggleQuickAccessBindings();
+                break;
+        }
     }
 
     private struct WidgetConfigStruct

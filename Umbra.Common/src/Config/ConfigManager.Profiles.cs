@@ -14,11 +14,7 @@
  *     GNU Affero General Public License for more details.
  */
 
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using Newtonsoft.Json;
 
 namespace Umbra.Common;
@@ -126,7 +122,6 @@ public static partial class ConfigManager
 
         File.Copy(sourcePath, destPath, true);
         ProfileNames.Clear();
-
         LoadWithoutRestart();
     }
 
@@ -200,6 +195,9 @@ public static partial class ConfigManager
         }
         
         WriteFile($"{profileName}.profile.json", data);
+     
+        // Clearing the list will force a reload of available profiles next time it is requested.
+        ProfileNames.Clear();
     }
 
     /// <summary>

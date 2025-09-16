@@ -1,9 +1,6 @@
 ﻿using Dalamud.Game.Text;
 using System.Collections.Immutable;
-using Umbra.Common;
-using Umbra.Game;
 using Umbra.Widgets.Popup;
-using Una.Drawing;
 
 namespace Umbra.Widgets;
 
@@ -85,7 +82,7 @@ internal partial class TeleportWidgetPopup
                     }
 
                     menuItemNode.SortIndex =  item.SortIndex;
-                    menuItemNode.OnClick   += _ => item.Invoke();
+                    menuItemNode.OnClick   += _ => { item.Invoke(); Close(); };
 
                     miscNode.QuerySelector(".list")!.AppendChild(menuItemNode);
                     break;

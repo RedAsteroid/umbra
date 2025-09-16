@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using Dalamud.Plugin.Services;
-using Umbra.Common;
-using Umbra.Game;
-using Una.Drawing;
+﻿using Dalamud.Game.Gui.Dtr;
 
 namespace Umbra.Widgets;
 
@@ -120,12 +116,28 @@ internal sealed partial class DtrBarWidget(
 
         if (entry.IsInteractive) {
             node.Tooltip =  entry.TooltipText?.TextValue;
-            node.OnClick += _ => entry.InvokeClickAction();
+            node.OnClick += _ => entry.InvokeClickAction(MouseClickType.Left, GetModifierKeyState());
+            node.OnRightClick += _ => entry.InvokeClickAction(MouseClickType.Right, GetModifierKeyState());
         }
 
         _entries.Add(entry.Name, node);
 
         Node.AppendChild(node);
+    }
+
+    private static ClickModifierKeys GetModifierKeyState()
+    {
+        bool shift = ImGui.IsKeyDown(ImGuiKey.LeftShift) || ImGui.IsKeyDown(ImGuiKey.RightShift);
+        bool ctrl  = ImGui.IsKeyDown(ImGuiKey.LeftCtrl) || ImGui.IsKeyDown(ImGuiKey.RightCtrl);
+        bool alt   = ImGui.IsKeyDown(ImGuiKey.LeftAlt) || ImGui.IsKeyDown(ImGuiKey.RightAlt);
+        
+        ClickModifierKeys modifierKeys = ClickModifierKeys.None;
+        
+        if (shift) modifierKeys |= ClickModifierKeys.Shift;
+        if (ctrl)  modifierKeys |= ClickModifierKeys.Ctrl;
+        if (alt)   modifierKeys |= ClickModifierKeys.Alt;
+        
+        return modifierKeys;
     }
 
     private void OnDtrBarEntryRemoved(DtrBarEntry entry)
